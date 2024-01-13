@@ -113,6 +113,13 @@ impl<'a> Scanner<'a> {
                 }
             }
             '"' => self.string(),
+            c => {
+                if is_digit(c) {
+                    self.number()
+                } else {
+                    Err(format!("Unexpected character: {}", c))
+                }
+            }
             _ => Err(format!("Unexpected character: {}", c)),
         }
     }
@@ -158,24 +165,57 @@ impl<'a> Scanner<'a> {
         });
     }
     fn string(self: &mut Self) -> Result<(), String> {
-		
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
                 self.line += 1;
             }
             self.advance();
-			println!("peek ,{}",self.peek());
+            println!("peek ,{}", self.peek());
         }
         if self.is_at_end() {
             return Err("undeterminded string".to_string());
         }
         self.advance();
         //		let value = self.source.as_bytes()[self.start+1..self.current];
-		let value = String::from_utf8_lossy(
-			&self.source.as_bytes()[self.start as usize + 1..self.current as usize - 1],
-		);
-		self.add_token_lit(TokenType::STRING, Some(LiteralValue::STRING(value.to_string())));
-		Ok(())
+        let value = String::from_utf8_lossy(
+            &self.source.as_bytes()[self.start as usize + 1..self.current as usize - 1],
+        );
+        self.add_token_lit(
+            TokenType::STRING,
+            Some(LiteralValue::STRING(value.to_string())),
+        );
+        Ok(())
+    }
+
+    fn number(self: &mut Self) -> Result<(), String> {
+        while is_digit(self.peek()) {
+            self.advance();
+        }
+        while self.peek() == '.' && is_digit(self.peek_next()) {
+            self.advance();
+            while is_digit(self.peek()) {
+                self.advance();
+            }
+        }
+        let sub_string = String::from_utf8_lossy(
+            &self.source.as_bytes()[self.start as usize..self.current as usize],
+        );
+        match sub_string.parse::<f64>() {
+            Ok(v) => {
+                self.add_token_lit(TokenType::NUMBER, Some(LiteralValue::NUMBER(v)));
+				Ok(())
+            }
+            Err(e) => return Err(format!("parse number error: {}", e)),
+        }
+    }
+    fn peek_next(self: &mut Self) -> char {
+        if self.current + 1 >= self.source.len() as u64 {
+            return '\0';
+        }
+        self.source
+            .chars()
+            .nth((self.current + 1) as usize)
+            .unwrap()
     }
 }
 
@@ -288,4 +328,7 @@ impl std::fmt::Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
+}
+fn is_digit(c: char) -> bool {
+    c >= '0' && c <= '9'
 }

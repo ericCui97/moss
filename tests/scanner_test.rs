@@ -87,4 +87,25 @@ mod tests {
             _ => panic!("literal is not string"),
         }
     }
+    #[test]
+    fn test_number(){
+        let mut scanner = Scanner::new("123 123.456 0.1");
+        let tokens = scanner.scan_tokens().unwrap();
+        for t in &tokens {
+            dbg!(t);
+        }
+        assert_eq!(tokens[0].token_type, TokenType::NUMBER);
+        assert_eq!(tokens[0].lexeme, "123");
+        assert_eq!(tokens[0].literal, Some(LiteralValue::NUMBER(123.0)));
+
+        assert_eq!(tokens[1].token_type, TokenType::NUMBER);
+        assert_eq!(tokens[1].lexeme, "123.456");
+        assert_eq!(tokens[2].token_type, TokenType::NUMBER);
+        assert_eq!(tokens[2].lexeme, "0.1");
+        assert_eq!(tokens[3].token_type, TokenType::EOF);
+        match tokens[0].literal.as_ref().unwrap() {
+            LiteralValue::NUMBER(n) => assert_eq!(*n, 123.0),
+            _ => panic!("literal is not number"),
+        }
+    }
 }
