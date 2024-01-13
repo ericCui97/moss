@@ -339,8 +339,22 @@ pub enum TokenType {
 pub enum LiteralValue {
     STRING(String),
     NUMBER(f64),
-    BOOLEAN(bool),
+//    BOOLEAN(bool),
     NIL,
+    TRUE,
+    FALSE,
+}
+
+impl LiteralValue {
+    pub fn to_string(&self) -> String {
+        match self {
+            LiteralValue::NUMBER(n) => n.to_string(),
+            LiteralValue::STRING(s) => s.to_string(),
+            LiteralValue::TRUE => "true".to_string(),
+            LiteralValue::FALSE => "false".to_string(),
+            LiteralValue::NIL => "nil".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -384,4 +398,17 @@ fn is_alpha(c: char) -> bool {
 
 fn is_alpha_numeric(c: char) -> bool {
     is_alpha(c) || is_digit(c)
+}
+#[cfg(test)]
+mod tests{
+    #[test]
+    fn test_string(){
+        let mut scanner = super::Scanner::new("\"hello world\"");
+        let tokens = scanner.scan_tokens().unwrap();
+        assert_eq!(tokens.len(),2);
+        dbg!(&tokens[0]);
+        assert_eq!(tokens[0].token_type, super::TokenType::STRING);
+        assert_eq!(tokens[0].lexeme, "\"hello world\"");
+        assert_eq!(tokens[1].token_type, super::TokenType::EOF);
+    }
 }
