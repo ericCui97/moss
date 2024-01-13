@@ -1,3 +1,32 @@
+use lazy_static::lazy_static;
+use std::collections::HashMap;
+lazy_static! {
+    static ref KEYWORDS: HashMap<&'static str, TokenType> = {
+        [
+            ("and", TokenType::AND),
+            ("class", TokenType::CLASS),
+            ("else", TokenType::ELSE),
+            ("false", TokenType::FALSE),
+            ("fun", TokenType::FUN),
+            ("for", TokenType::FOR),
+            ("if", TokenType::IF),
+            ("nil", TokenType::NIL),
+            ("or", TokenType::OR),
+            ("print", TokenType::PRINT),
+            ("return", TokenType::RETURN),
+            ("super", TokenType::SUPER),
+            ("this", TokenType::THIS),
+            ("true", TokenType::TRUE),
+            ("var", TokenType::VAR),
+            ("while", TokenType::WHILE),
+            // 添加其他映射关系...
+        ]
+        .iter()
+        .cloned()
+        .collect()
+    };
+}
+
 #[warn(non_camel_case_types)]
 #[warn(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
@@ -93,7 +122,7 @@ impl<'a> Scanner<'a> {
             }
             '=' => {
                 if self.match_char('=') {
-                    Ok(self.add_token(TokenType::EqualEqual))
+                    Ok(self.add_token(TokenType::EQUAL_EQUAL))
                 } else {
                     Ok(self.add_token(TokenType::EQUAL))
                 }
@@ -116,15 +145,16 @@ impl<'a> Scanner<'a> {
             c => {
                 if is_digit(c) {
                     self.number()
+                } else if is_alpha(c) {
+                    self.identifier()
                 } else {
                     Err(format!("Unexpected character: {}", c))
                 }
             }
-            _ => Err(format!("Unexpected character: {}", c)),
         }
     }
 
-    fn peek(self: &mut Self) -> char {
+    fn peek(self: &Self) -> char {
         if self.is_at_end() {
             return '\0';
         }
@@ -203,12 +233,28 @@ impl<'a> Scanner<'a> {
         match sub_string.parse::<f64>() {
             Ok(v) => {
                 self.add_token_lit(TokenType::NUMBER, Some(LiteralValue::NUMBER(v)));
-				Ok(())
+                Ok(())
             }
             Err(e) => return Err(format!("parse number error: {}", e)),
         }
     }
-    fn peek_next(self: &mut Self) -> char {
+    fn identifier(&mut self) -> Result<(), String> {
+        while is_alpha_numeric(self.peek()) {
+            self.advance();
+        }
+        let sub_string = String::from_utf8_lossy(
+            &self.source.as_bytes()[self.start as usize..self.current as usize],
+        );
+        let mut token_type = TokenType::IDENTIFIER;
+        match KEYWORDS.get(sub_string.as_ref()) {
+            Some(keyword_type) => token_type = *keyword_type,
+            None => (),
+        }
+        self.add_token(token_type);
+
+        Ok(())
+    }
+    fn peek_next(self: &Self) -> char {
         if self.current + 1 >= self.source.len() as u64 {
             return '\0';
         }
@@ -252,7 +298,7 @@ pub enum TokenType {
     // !=
     EQUAL,
     // =
-    EqualEqual,
+    EQUAL_EQUAL,
     // ==
     GREATER,
     // >
@@ -331,4 +377,11 @@ impl std::fmt::Display for Token {
 }
 fn is_digit(c: char) -> bool {
     c >= '0' && c <= '9'
+}
+fn is_alpha(c: char) -> bool {
+    c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_'
+}
+
+fn is_alpha_numeric(c: char) -> bool {
+    is_alpha(c) || is_digit(c)
 }

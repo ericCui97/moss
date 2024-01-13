@@ -2,7 +2,7 @@
 
 #[cfg(test)]
 mod tests {
-    use moss::scanner::{*, self};
+    use moss::scanner::{*};
 
     #[test]
     fn handle_one_char_tokens() {
@@ -36,7 +36,7 @@ mod tests {
         let tokens = scanner.scan_tokens().unwrap();
         assert_eq!(tokens.len(),5);
         assert_eq!(tokens[0].token_type, TokenType::BANG_EQUAL);
-        assert_eq!(tokens[1].token_type, TokenType::EqualEqual);
+        assert_eq!(tokens[1].token_type, TokenType::EQUAL_EQUAL);
         assert_eq!(tokens[2].token_type, TokenType::LESS_EQUAL);
         assert_eq!(tokens[3].token_type, TokenType::GREATER_EQUAL);
         assert_eq!(tokens[4].token_type, TokenType::EOF);
@@ -107,5 +107,67 @@ mod tests {
             LiteralValue::NUMBER(n) => assert_eq!(*n, 123.0),
             _ => panic!("literal is not number"),
         }
+    }
+
+    #[test]
+    fn test_identifier(){
+        let mut scanner = Scanner::new(r#"var_a = "hello world";"#);
+        let tokens = scanner.scan_tokens().unwrap();
+        for t in &tokens {
+            dbg!(t);
+        }
+        assert_eq!(tokens[0].token_type, TokenType::IDENTIFIER);
+        assert_eq!(tokens[0].lexeme, "var_a");
+        assert_eq!(tokens[1].token_type, TokenType::EQUAL);
+        assert_eq!(tokens[2].token_type, TokenType::STRING);
+        assert_eq!(tokens[2].lexeme, "\"hello world\"");
+        assert_eq!(tokens[3].token_type, TokenType::SEMICOLON);
+        assert_eq!(tokens[4].token_type, TokenType::EOF);
+    }
+    #[test]
+    fn test_identifier_hold(){
+        let mut scanner  = Scanner::new(r#"
+        var a = 1 if(a==1) or nil return
+        "#);
+        let tokens = scanner.scan_tokens().unwrap();
+        dbg!(tokens[7].token_type);
+        assert_eq!(tokens[0].token_type, TokenType::VAR);
+        assert_eq!(tokens[1].token_type, TokenType::IDENTIFIER);
+        assert_eq!(tokens[2].token_type, TokenType::EQUAL);
+        assert_eq!(tokens[3].token_type, TokenType::NUMBER);
+        assert_eq!(tokens[4].token_type, TokenType::IF);
+        assert_eq!(tokens[5].token_type, TokenType::LEFT_PAREN);
+        assert_eq!(tokens[6].token_type, TokenType::IDENTIFIER);
+        assert_eq!(tokens[7].token_type, TokenType::EQUAL_EQUAL);
+        assert_eq!(tokens[8].token_type, TokenType::NUMBER);
+        assert_eq!(tokens[9].token_type, TokenType::RIGHT_PAREN);
+        assert_eq!(tokens[10].token_type, TokenType::OR);
+        assert_eq!(tokens[11].token_type, TokenType::NIL);
+        assert_eq!(tokens[12].token_type, TokenType::RETURN);
+        assert_eq!(tokens[13].token_type, TokenType::EOF);
+    }
+    #[test]
+    fn test_all_keywords(){
+        let mut scanner = Scanner::new(r#"
+        and class else false fun for if nil or print return super this true var while
+        "#);
+        let tokens = scanner.scan_tokens().unwrap();
+        assert_eq!(tokens[0].token_type, TokenType::AND);
+        assert_eq!(tokens[1].token_type, TokenType::CLASS);
+        assert_eq!(tokens[2].token_type, TokenType::ELSE);
+        assert_eq!(tokens[3].token_type, TokenType::FALSE);
+        assert_eq!(tokens[4].token_type, TokenType::FUN);
+        assert_eq!(tokens[5].token_type, TokenType::FOR);
+        assert_eq!(tokens[6].token_type, TokenType::IF);
+        assert_eq!(tokens[7].token_type, TokenType::NIL);
+        assert_eq!(tokens[8].token_type, TokenType::OR);
+        assert_eq!(tokens[9].token_type, TokenType::PRINT);
+        assert_eq!(tokens[10].token_type, TokenType::RETURN);
+        assert_eq!(tokens[11].token_type, TokenType::SUPER);
+        assert_eq!(tokens[12].token_type, TokenType::THIS);
+        assert_eq!(tokens[13].token_type, TokenType::TRUE);
+        assert_eq!(tokens[14].token_type, TokenType::VAR);
+        assert_eq!(tokens[15].token_type, TokenType::WHILE);
+        assert_eq!(tokens[16].token_type, TokenType::EOF);
     }
 }
