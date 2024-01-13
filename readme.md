@@ -10,8 +10,3 @@ moss is a simple programming language written in rust.
 cargo install
 ```
 
-### test coverage
-
-```bash
-cargo tarpaulin --out Html
-```

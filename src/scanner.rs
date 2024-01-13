@@ -1,5 +1,5 @@
-#[allow(dead_code)]
 #[warn(non_camel_case_types)]
+#[warn(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct Scanner<'a> {
     source: &'a str,
@@ -8,6 +8,7 @@ pub struct Scanner<'a> {
     current: u64,
     line: usize,
 }
+
 impl<'a> Scanner<'a> {
     pub fn new(_source: &'a str) -> Self {
         Self {
@@ -42,7 +43,7 @@ impl<'a> Scanner<'a> {
     }
     pub fn scan_token(&mut self) -> Result<(), String> {
         let c = self.advance();
-        dbg!("scan_token", c);
+        // dbg!("scan_token", c);
         match c {
             '(' => Ok(self.add_token(TokenType::LEFT_PAREN)),
             ')' => Ok(self.add_token(TokenType::RIGHT_PAREN)),
@@ -72,6 +73,20 @@ impl<'a> Scanner<'a> {
                     Ok(self.add_token(TokenType::BANG))
                 }
             }
+            // comments 注释
+            '/' => {
+                if self.match_char('/') {
+                    loop {
+                        if self.peek() == '\n' || self.is_at_end() {
+                            break;
+                        }
+                        self.advance();
+                    }
+                } else {
+                    self.add_token(TokenType::SLASH)
+                }
+                Ok(())
+            }
             '\n' => {
                 self.line += 1;
                 Ok(())
@@ -97,6 +112,7 @@ impl<'a> Scanner<'a> {
                     Ok(self.add_token(TokenType::GREATER))
                 }
             }
+            '"' => self.string(),
             _ => Err(format!("Unexpected character: {}", c)),
         }
     }
@@ -107,7 +123,8 @@ impl<'a> Scanner<'a> {
         }
         self.source.chars().nth(self.current as usize).unwrap()
     }
-    fn is_at_end(&mut self) -> bool {
+
+    fn is_at_end(self: &Self) -> bool {
         self.current >= self.source.len() as u64
     }
     fn match_char(&mut self, c: char) -> bool {
@@ -140,35 +157,77 @@ impl<'a> Scanner<'a> {
             line_number: self.line,
         });
     }
+    fn string(self: &mut Self) -> Result<(), String> {
+		
+        while self.peek() != '"' && !self.is_at_end() {
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
+            self.advance();
+			println!("peek ,{}",self.peek());
+        }
+        if self.is_at_end() {
+            return Err("undeterminded string".to_string());
+        }
+        self.advance();
+        //		let value = self.source.as_bytes()[self.start+1..self.current];
+		let value = String::from_utf8_lossy(
+			&self.source.as_bytes()[self.start as usize + 1..self.current as usize - 1],
+		);
+		self.add_token_lit(TokenType::STRING, Some(LiteralValue::STRING(value.to_string())));
+		Ok(())
+    }
 }
+
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenType {
     // Single-character tokens.
-    LEFT_PAREN,  // (
-    RIGHT_PAREN, // )
-    LEFT_BRACE,  // {
-    RIGHT_BRACE, // }
-    COMMA,       // ,
-    DOT,         // .
-    MINUS,       // -
-    PLUS,        // +
-    SEMICOLON,   // ;
-    SLASH,       // /
-    STAR,        // *
+    LEFT_PAREN,
+    // (
+    RIGHT_PAREN,
+    // )
+    LEFT_BRACE,
+    // {
+    RIGHT_BRACE,
+    // }
+    COMMA,
+    // ,
+    DOT,
+    // .
+    MINUS,
+    // -
+    PLUS,
+    // +
+    SEMICOLON,
+    // ;
+    SLASH,
+    // /
+    STAR,
+    // *
     // one or two character tokens,
-    BANG,          // !
-    BANG_EQUAL,    // !=
-    EQUAL,         // =
-    EqualEqual,    // ==
-    GREATER,       // >
-    GREATER_EQUAL, // >=
-    LESS,          // <
-    LESS_EQUAL,    // <=
+    BANG,
+    // !
+    BANG_EQUAL,
+    // !=
+    EQUAL,
+    // =
+    EqualEqual,
+    // ==
+    GREATER,
+    // >
+    GREATER_EQUAL,
+    // >=
+    LESS,
+    // <
+    LESS_EQUAL,
+    // <=
     // Literals.
-    IDENTIFIER, // identifier
-    STRING,     // string
-    NUMBER,     // number
+    IDENTIFIER,
+    // identifier
+    STRING,
+    // string
+    NUMBER, // number
 
     AND,
     CLASS,
@@ -197,13 +256,15 @@ pub enum LiteralValue {
     BOOLEAN(bool),
     NIL,
 }
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub token_type: TokenType,
-    lexeme: String,
-    literal: Option<LiteralValue>,
-    line_number: usize,
+    pub lexeme: String,
+    pub literal: Option<LiteralValue>,
+    pub line_number: usize,
 }
+
 impl Token {
     pub fn new(
         token_type: TokenType,
