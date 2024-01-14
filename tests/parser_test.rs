@@ -17,4 +17,12 @@ mod tests{
 		// println!("{}", expr);
 		assert_eq!(expr.to_string(), "BINARY (* UNARY (- LITERAL 123) (GROUP LITERAL 45.67))");
 	}
+
+	fn test_addition(){
+		let mut scanner = moss::scanner::Scanner::new("1+2");
+		let tokens = scanner.scan_tokens().unwrap();
+		let mut parser = moss::parser::Parser::new(tokens);
+		let expr = parser.parse().unwrap();
+		assert_eq!(expr.to_string(),"BINARY (+ LITERAL 1 LITERAL 2)");
+	}
 }
