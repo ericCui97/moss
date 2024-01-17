@@ -1,6 +1,6 @@
 use crate::expr::Expr;
 use crate::scanner::{LiteralValue, Token, TokenType};
-use std::cell::{RefCell};
+use std::cell::RefCell;
 
 #[derive(Debug, Clone)]
 pub struct Parser {
@@ -153,22 +153,22 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
+	use super::*;
+	use crate::scanner::Scanner;
+
 	#[test]
 	fn test_parser() {
-		use crate::parser::Parser;
-		use crate::scanner::Scanner;
 		let source = "1+2*3";
 		let scan = &mut Scanner::new(source);
 		let tokens = scan.scan_tokens().unwrap();
 		let mut parser = Parser::new(tokens);
 		let expr = parser.parse().unwrap();
 //		println!("{:?}", expr.to_string());
+		assert_eq!(expr.to_string(), "B(L(1) + B(L(2) * L(3)))");
 	}
 
 	#[test]
 	fn test_comparison() {
-		use crate::parser::Parser;
-		use crate::scanner::Scanner;
 		let source = "1+2*3>=4";
 		let scan = &mut Scanner::new(source);
 		let tokens = scan.scan_tokens().unwrap();
@@ -181,8 +181,6 @@ mod tests {
 
 	#[test]
 	fn test_addition() {
-		use crate::parser::Parser;
-		use crate::scanner::Scanner;
 		let source = "1+2";
 		let scan = &mut Scanner::new(source);
 		let tokens = scan.scan_tokens().unwrap();
@@ -195,8 +193,6 @@ mod tests {
 
 	#[test]
 	fn test_simple_math_expr_parse_with_paren() {
-		use crate::parser::Parser;
-		use crate::scanner::Scanner;
 		let source = "(1+21)*2432";
 		let scan = &mut Scanner::new(source);
 		let tokens = scan.scan_tokens().unwrap();
@@ -211,8 +207,6 @@ mod tests {
 
 	#[test]
 	fn test_complex_expression(){
-use crate::parser::Parser;
-		use crate::scanner::Scanner;
 		let source = "(1.2+2)*3.4>=4";
 		let scan = &mut Scanner::new(source);
 		let tokens = scan.scan_tokens().unwrap();
@@ -224,8 +218,6 @@ use crate::parser::Parser;
 
 	#[test]
 	fn test_simple_math_expr_parse2() {
-		use crate::parser::Parser;
-		use crate::scanner::Scanner;
 		let source = "1+2*3";
 		let scan = &mut Scanner::new(source);
 		let tokens = scan.scan_tokens().unwrap();
@@ -237,8 +229,6 @@ use crate::parser::Parser;
 
 	#[test]
 	fn test_unary() {
-		use crate::parser::Parser;
-		use crate::scanner::Scanner;
 		let source = "-1";
 		let scan = &mut Scanner::new(source);
 		let tokens = scan.scan_tokens().unwrap();

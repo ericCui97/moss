@@ -1,14 +1,14 @@
+mod parser;
 mod scanner;
-
 use crate::scanner::Scanner;
 use std::{
     env, fs,
     io::{stdin, stdout, BufRead, Write},
     process::exit,
 };
-fn run(source: &str)->Result<(),String> {
+fn run(source: &str) -> Result<(), String> {
     let scan = &mut Scanner::new(source);
-    let tokens =scan.scan_tokens()?;
+    let tokens = scan.scan_tokens()?;
     for token in tokens {
         println!("{:?}", token);
     }
@@ -54,14 +54,14 @@ fn run_prompt() -> Result<(), std::io::Error> {
     }
 }
 fn main() {
-    // let args = env::args().collect::<Vec<String>>();
-    // if args.len() > 2 {
-    //     println!("Usage: <filename>");
-    //     exit(64);
-    // } else if args.len() == 2 {
-    //     run_file(&args[1]);
-    // } else {
-    //     // REPL
-    //     run_prompt().unwrap();
-    // }
+    let args = env::args().collect::<Vec<String>>();
+    if args.len() > 2 {
+        println!("Usage: <filename>");
+        exit(64);
+    } else if args.len() == 2 {
+        run_file(&args[1]);
+    } else {
+        // REPL
+        run_prompt().unwrap();
+    }
 }
