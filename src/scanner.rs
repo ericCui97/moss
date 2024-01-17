@@ -22,7 +22,7 @@ lazy_static! {
             // 添加其他映射关系...
         ]
         .iter()
-        .cloned()
+		.cloned()
         .collect()
     };
 }
@@ -346,14 +346,14 @@ pub enum LiteralValue {
 }
 
 impl LiteralValue {
-	pub fn from_token(token: TokenType) -> Option<LiteralValue> {
-		match token {
-			TokenType::STRING => Some(LiteralValue::STRING("".to_string())),
-			TokenType::NUMBER => Some(LiteralValue::NUMBER(0.0)),
-			TokenType::NIL => Some(LiteralValue::NIL),
-			TokenType::TRUE => Some(LiteralValue::TRUE),
-			TokenType::FALSE => Some(LiteralValue::FALSE),
-			_ => None,
+	pub fn from_token(token: &Token) -> Result<LiteralValue,String> {
+		match token.token_type {
+			TokenType::STRING => Ok(LiteralValue::STRING(token.lexeme.clone())),
+			TokenType::NUMBER => Ok(LiteralValue::NUMBER(token.lexeme.parse::<f64>().unwrap())),
+			TokenType::NIL => Ok(LiteralValue::NIL),
+			TokenType::TRUE => Ok(LiteralValue::TRUE),
+			TokenType::FALSE => Ok(LiteralValue::FALSE),
+			_ => Err(String::from("not a literal value")),
 		}
 	}
 }
