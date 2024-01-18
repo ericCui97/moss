@@ -2,13 +2,13 @@
 
 #[cfg(test)]
 mod tests {
-    use moss::scanner::{*};
+    use moss::scanner::*;
 
     #[test]
     fn handle_one_char_tokens() {
         let mut scanner = Scanner::new("(){};+-*");
         let tokens = scanner.scan_tokens().unwrap();
-        assert_eq!(tokens.len(),9);
+        assert_eq!(tokens.len(), 9);
         assert_eq!(tokens[0].token_type, TokenType::LEFT_PAREN);
         assert_eq!(tokens[1].token_type, TokenType::RIGHT_PAREN);
         assert_eq!(tokens[2].token_type, TokenType::LEFT_BRACE);
@@ -20,10 +20,10 @@ mod tests {
         assert_eq!(tokens[8].token_type, TokenType::EOF);
     }
     #[test]
-    fn test1(){
+    fn test1() {
         let mut scanner = Scanner::new("(( ))");
         let tokens = scanner.scan_tokens().unwrap();
-        assert_eq!(tokens.len(),5);
+        assert_eq!(tokens.len(), 5);
         assert_eq!(tokens[0].token_type, TokenType::LEFT_PAREN);
         assert_eq!(tokens[1].token_type, TokenType::LEFT_PAREN);
         assert_eq!(tokens[2].token_type, TokenType::RIGHT_PAREN);
@@ -31,10 +31,10 @@ mod tests {
         assert_eq!(tokens[4].token_type, TokenType::EOF);
     }
     #[test]
-    fn test2char(){
+    fn test2char() {
         let mut scanner = Scanner::new("!= == <= >= ");
         let tokens = scanner.scan_tokens().unwrap();
-        assert_eq!(tokens.len(),5);
+        assert_eq!(tokens.len(), 5);
         assert_eq!(tokens[0].token_type, TokenType::BANG_EQUAL);
         assert_eq!(tokens[1].token_type, TokenType::EQUAL_EQUAL);
         assert_eq!(tokens[2].token_type, TokenType::LESS_EQUAL);
@@ -58,26 +58,26 @@ mod tests {
 
     // }
     #[test]
-    fn test_string(){
+    fn test_string() {
         let mut scanner = Scanner::new("\"hello world\"");
         let tokens = scanner.scan_tokens().unwrap();
-        assert_eq!(tokens.len(),2);
+        assert_eq!(tokens.len(), 2);
         dbg!(&tokens[0]);
         assert_eq!(tokens[0].token_type, TokenType::STRING);
         assert_eq!(tokens[0].lexeme, "\"hello world\"");
         assert_eq!(tokens[1].token_type, TokenType::EOF);
     }
     #[test]
-    fn test_string_err(){
+    fn test_string_err() {
         let mut scanner = Scanner::new("\"hello world");
         let tokens = scanner.scan_tokens();
-        assert_eq!(tokens.is_err(),true);
+        assert_eq!(tokens.is_err(), true);
     }
     #[test]
-    fn test_string2(){
+    fn test_string2() {
         let mut scanner = Scanner::new(r#""hello world""#);
         let tokens = scanner.scan_tokens().unwrap();
-        assert_eq!(tokens.len(),2);
+        assert_eq!(tokens.len(), 2);
         dbg!(&tokens[0]);
         assert_eq!(tokens[0].token_type, TokenType::STRING);
         assert_eq!(tokens[0].lexeme, "\"hello world\"");
@@ -88,7 +88,7 @@ mod tests {
         }
     }
     #[test]
-    fn test_number(){
+    fn test_number() {
         let mut scanner = Scanner::new("123 123.456 0.1");
         let tokens = scanner.scan_tokens().unwrap();
         for t in &tokens {
@@ -110,7 +110,7 @@ mod tests {
     }
 
     #[test]
-    fn test_identifier(){
+    fn test_identifier() {
         let mut scanner = Scanner::new(r#"var_a = "hello world";"#);
         let tokens = scanner.scan_tokens().unwrap();
         for t in &tokens {
@@ -125,10 +125,12 @@ mod tests {
         assert_eq!(tokens[4].token_type, TokenType::EOF);
     }
     #[test]
-    fn test_identifier_hold(){
-        let mut scanner  = Scanner::new(r#"
+    fn test_identifier_hold() {
+        let mut scanner = Scanner::new(
+            r#"
         var a = 1 if(a==1) or nil return
-        "#);
+        "#,
+        );
         let tokens = scanner.scan_tokens().unwrap();
         dbg!(tokens[7].token_type);
         assert_eq!(tokens[0].token_type, TokenType::VAR);
@@ -147,10 +149,12 @@ mod tests {
         assert_eq!(tokens[13].token_type, TokenType::EOF);
     }
     #[test]
-    fn test_all_keywords(){
-        let mut scanner = Scanner::new(r#"
+    fn test_all_keywords() {
+        let mut scanner = Scanner::new(
+            r#"
         and class else false fun for if nil or print return super this true var while
-        "#);
+        "#,
+        );
         let tokens = scanner.scan_tokens().unwrap();
         assert_eq!(tokens[0].token_type, TokenType::AND);
         assert_eq!(tokens[1].token_type, TokenType::CLASS);
