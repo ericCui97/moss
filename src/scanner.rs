@@ -1,5 +1,7 @@
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+
+use crate::{expr::Accept, interpreter::Vistor};
 lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, TokenType> = {
         [
@@ -405,6 +407,24 @@ impl LiteralValue {
     }
 }
 
+enum PrimitiveType {
+    NUMBER(f64),
+    STRING(String),
+    BOOLEAN(bool),
+}
+
+impl Accept for LiteralValue {
+    fn accept(&self, _visitor: &mut dyn Vistor) -> Option<PrimitiveType> {
+        match self {
+            LiteralValue::NUMBER(n) => Some(PrimitiveType::NUMBER(*n)),
+            LiteralValue::STRING(s) => Some(PrimitiveType::STRING(s.to_string())),
+            LiteralValue::TRUE => Some(PrimitiveType::BOOLEAN(true)),
+            LiteralValue::FALSE => Some(PrimitiveType::BOOLEAN(false)),
+            LiteralValue::NIL => None, 
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub token_type: TokenType,
@@ -491,22 +511,6 @@ mod tests {
         assert_eq!(tokens[3].token_type, TokenType::GREATER_EQUAL);
         assert_eq!(tokens[4].token_type, TokenType::EOF);
     }
-    // #[test]
-    // fn test_all_tokens(){
-    //     let mut scanner = Scanner::new("{} !//,.*");
-    //     let tokens = scanner.scan_tokens().unwrap();
-    //     assert_eq!(tokens.len(),9);
-    //     assert_eq!(tokens[0].token_type, TokenType::LEFT_BRACE);
-    //     assert_eq!(tokens[1].token_type, TokenType::RIGHT_BRACE);
-    //     assert_eq!(tokens[2].token_type, TokenType::BANG);
-    //     assert_eq!(tokens[3].token_type, TokenType::SLASH);
-    //     assert_eq!(tokens[4].token_type, TokenType::SLASH);
-    //     assert_eq!(tokens[5].token_type, TokenType::COMMA);
-    //     assert_eq!(tokens[6].token_type, TokenType::DOT);
-    //     assert_eq!(tokens[7].token_type, TokenType::STAR);
-    //     assert_eq!(tokens[8].token_type, TokenType::EOF);
-
-    // }
     #[test]
     fn test_string() {
         let mut scanner = Scanner::new("\"hello world\"");

@@ -1,6 +1,7 @@
 mod expr;
 mod parser;
 mod scanner;
+mod interpreter;
 use crate::scanner::Scanner;
 use parser::Parser;
 use std::{
