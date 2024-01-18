@@ -1,7 +1,6 @@
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 
-use crate::{expr::Accept, interpreter::Vistor};
 lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, TokenType> = {
         [
@@ -79,43 +78,43 @@ impl<'a> Scanner<'a> {
             '(' => {
                 self.add_token(TokenType::LEFT_PAREN);
                 Ok(())
-            },
+            }
             ')' => {
                 self.add_token(TokenType::RIGHT_PAREN);
                 Ok(())
-            },
+            }
             '{' => {
                 self.add_token(TokenType::LEFT_BRACE);
                 Ok(())
-            },
+            }
             '}' => {
                 self.add_token(TokenType::RIGHT_BRACE);
                 Ok(())
-            },
+            }
             ',' => {
                 self.add_token(TokenType::COMMA);
                 Ok(())
-            },
+            }
             '.' => {
                 self.add_token(TokenType::DOT);
                 Ok(())
-            },
+            }
             '-' => {
                 self.add_token(TokenType::MINUS);
                 Ok(())
-            },
+            }
             '+' => {
                 self.add_token(TokenType::PLUS);
                 Ok(())
-            },
+            }
             ';' => {
                 self.add_token(TokenType::SEMICOLON);
                 Ok(())
-            },
+            }
             '*' => {
                 self.add_token(TokenType::STAR);
                 Ok(())
-            },
+            }
             // '/' => {
             //     loop {
             //         if self.is_at_end() || self.peek() == '\n' {
@@ -227,7 +226,8 @@ impl<'a> Scanner<'a> {
             &self.source.as_bytes()[self.start as usize..self.current as usize],
         )
         .to_string();
-        self.tokens.push(Token::new(token_type, text, literal, self.line));
+        self.tokens
+            .push(Token::new(token_type, text, literal, self.line));
     }
     fn string(&mut self) -> Result<(), String> {
         while self.peek() != '"' && !self.is_at_end() {
@@ -236,6 +236,13 @@ impl<'a> Scanner<'a> {
             }
             self.advance();
             println!("peek ,{}", self.peek());
+        }
+        // empty string
+        if self.peek() =='"'{
+            dbg!("empty string");
+            self.advance();
+            self.add_token_lit(TokenType::STRING, Some(LiteralValue::STRING("".to_string())));
+            return Ok(());
         }
         if self.is_at_end() {
             return Err("undeterminded string".to_string());
@@ -270,7 +277,7 @@ impl<'a> Scanner<'a> {
                 self.add_token_lit(TokenType::NUMBER, Some(LiteralValue::NUMBER(v)));
                 Ok(())
             }
-            Err(e) => Err(format!("parse number error: {}", e))
+            Err(e) => Err(format!("parse number error: {}", e)),
         }
     }
     fn identifier(&mut self) -> Result<(), String> {
@@ -285,7 +292,9 @@ impl<'a> Scanner<'a> {
         //     Some(keyword_type) => token_type = *keyword_type,
         //     None => (),
         // }
-        if let Some(keyword_type) = KEYWORDS.get(sub_string.as_ref()) { token_type = *keyword_type }
+        if let Some(keyword_type) = KEYWORDS.get(sub_string.as_ref()) {
+            token_type = *keyword_type
+        }
         self.add_token(token_type);
 
         Ok(())
@@ -378,8 +387,7 @@ pub enum LiteralValue {
     NUMBER(f64),
     //    BOOLEAN(bool),
     NIL,
-    TRUE,
-    FALSE,
+    BOOLEAN(bool),
 }
 
 impl LiteralValue {
@@ -388,43 +396,36 @@ impl LiteralValue {
             TokenType::STRING => Ok(LiteralValue::STRING(token.lexeme.clone())),
             TokenType::NUMBER => Ok(LiteralValue::NUMBER(token.lexeme.parse::<f64>().unwrap())),
             TokenType::NIL => Ok(LiteralValue::NIL),
-            TokenType::TRUE => Ok(LiteralValue::TRUE),
-            TokenType::FALSE => Ok(LiteralValue::FALSE),
+            TokenType::TRUE => Ok(LiteralValue::BOOLEAN(true)),
+            TokenType::FALSE => Ok(LiteralValue::BOOLEAN(false)),
             _ => Err(String::from("not a literal value")),
         }
     }
+
+
+    pub fn unwrap_as_boolean(&self) -> LiteralValue {
+        match self {
+            LiteralValue::NIL => LiteralValue::BOOLEAN(false),
+            LiteralValue::BOOLEAN(b) => LiteralValue::BOOLEAN(*b),
+            LiteralValue::NUMBER(n) => LiteralValue::BOOLEAN(*n as f64 != 0.0f64),
+            LiteralValue::STRING(s) => LiteralValue::BOOLEAN(!s.is_empty()),
+        }
+    }
 }
+
 #[allow(clippy::inherent_to_string)]
 impl LiteralValue {
     pub fn to_string(&self) -> String {
         match self {
             LiteralValue::NUMBER(n) => n.to_string(),
             LiteralValue::STRING(s) => s.to_string(),
-            LiteralValue::TRUE => "true".to_string(),
-            LiteralValue::FALSE => "false".to_string(),
+            // LiteralValue::TRUE => "true".to_string(),
+            // LiteralValue::FALSE => "false".to_string(),
+            LiteralValue::BOOLEAN(b) => b.to_string(),
             LiteralValue::NIL => "nil".to_string(),
         }
     }
 }
-
-enum PrimitiveType {
-    NUMBER(f64),
-    STRING(String),
-    BOOLEAN(bool),
-}
-
-impl Accept for LiteralValue {
-    fn accept(&self, _visitor: &mut dyn Vistor) -> Option<PrimitiveType> {
-        match self {
-            LiteralValue::NUMBER(n) => Some(PrimitiveType::NUMBER(*n)),
-            LiteralValue::STRING(s) => Some(PrimitiveType::STRING(s.to_string())),
-            LiteralValue::TRUE => Some(PrimitiveType::BOOLEAN(true)),
-            LiteralValue::FALSE => Some(PrimitiveType::BOOLEAN(false)),
-            LiteralValue::NIL => None, 
-        }
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub token_type: TokenType,

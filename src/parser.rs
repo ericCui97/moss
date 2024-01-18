@@ -1,4 +1,7 @@
-use crate::{scanner::{LiteralValue, Token, TokenType}, expr::Expr};
+use crate::{
+    expr::Expr,
+    scanner::{LiteralValue, Token, TokenType},
+};
 use std::cell::RefCell;
 
 #[derive(Debug, Clone)]

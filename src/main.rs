@@ -1,7 +1,6 @@
 mod expr;
 mod parser;
 mod scanner;
-mod interpreter;
 use crate::scanner::Scanner;
 use parser::Parser;
 use std::{
@@ -14,7 +13,8 @@ fn run(source: &str) -> Result<(), String> {
     let tokens = scan.scan_tokens()?;
     let mut parser = Parser::new(tokens);
     let expr = parser.parse()?;
-    println!("{:?}", expr.to_string());
+    let result = expr.evaluate()?;
+    println!("{}", result.to_string());
     Ok(())
 }
 fn run_file(path: &str) {
@@ -53,7 +53,6 @@ fn run_prompt() -> Result<(), std::io::Error> {
                 exit(74);
             }
         }
-        println!("{}", buffer);
     }
 }
 fn main() {
