@@ -238,10 +238,13 @@ impl<'a> Scanner<'a> {
             println!("peek ,{}", self.peek());
         }
         // empty string
-        if self.peek() =='"'{
+        if self.peek() == '"' {
             dbg!("empty string");
             self.advance();
-            self.add_token_lit(TokenType::STRING, Some(LiteralValue::STRING("".to_string())));
+            self.add_token_lit(
+                TokenType::STRING,
+                Some(LiteralValue::STRING("".to_string())),
+            );
             return Ok(());
         }
         if self.is_at_end() {
@@ -401,7 +404,6 @@ impl LiteralValue {
             _ => Err(String::from("not a literal value")),
         }
     }
-
 
     pub fn unwrap_as_boolean(&self) -> LiteralValue {
         match self {

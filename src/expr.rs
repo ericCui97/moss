@@ -53,9 +53,7 @@ impl Expr {
                         _ => Err(format!("unary minus can only apply to number")),
                     },
                     TokenType::BANG => match right.unwrap().unwrap_as_boolean() {
-                        LiteralValue::BOOLEAN(b) => {
-                            Ok(LiteralValue::BOOLEAN(!b.clone()))
-                        }
+                        LiteralValue::BOOLEAN(b) => Ok(LiteralValue::BOOLEAN(!b.clone())),
                         _ => Err(format!("unary ! can only apply to boolean")),
                     },
                     _ => Err(format!("unary operator {:?} not supported", op.token_type)),
