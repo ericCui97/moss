@@ -1,6 +1,8 @@
+mod expr;
 mod parser;
 mod scanner;
 use crate::scanner::Scanner;
+use parser::Parser;
 use std::{
     env, fs,
     io::{stdin, stdout, BufRead, Write},
@@ -9,10 +11,10 @@ use std::{
 fn run(source: &str) -> Result<(), String> {
     let scan = &mut Scanner::new(source);
     let tokens = scan.scan_tokens()?;
-    for token in tokens {
-        println!("{:?}", token);
-    }
-    return Ok(());
+    let mut parser = Parser::new(tokens);
+    let expr = parser.parse()?;
+    println!("{:?}", expr.to_string());
+    Ok(())
 }
 fn run_file(path: &str) {
     match fs::read_to_string(path) {

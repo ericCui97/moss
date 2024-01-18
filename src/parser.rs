@@ -1,5 +1,4 @@
-use crate::expr::Expr;
-use crate::scanner::{LiteralValue, Token, TokenType};
+use crate::{scanner::{LiteralValue, Token, TokenType}, expr::Expr};
 use std::cell::RefCell;
 
 #[derive(Debug, Clone)]
@@ -43,13 +42,14 @@ impl Parser {
     // -> primary( () primitive)
     fn equality(&self) -> Result<Expr, String> {
         let mut lhs = self.comparison()?;
-        let match_case = self.match_token(&[TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL]);
-        while match_case {
-            let op = self.previous();
-            let rhs = self.comparison()?;
-            lhs = Expr::Binary(Box::from(lhs), op.clone(), Box::from(rhs));
+        if self.match_token(&[TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL]) {
+            loop {
+                let op = self.previous();
+                let rhs = self.comparison()?;
+                lhs = Expr::Binary(Box::from(lhs), op.clone(), Box::from(rhs));
+            }
         }
-        return Ok(lhs);
+        Ok(lhs)
     }
     // handle > >= < <=
 
@@ -101,7 +101,7 @@ impl Parser {
         if self.match_token(&[TokenType::LEFT_PAREN]) {
             let expr = self.expression()?;
             self.consume(TokenType::RIGHT_PAREN, "expect ')' after expression")?;
-            return Ok(Expr::Grouping(Box::from(expr)));
+            Ok(Expr::Grouping(Box::from(expr)))
         } else {
             let token = self.peek();
             self.advance();
@@ -113,7 +113,7 @@ impl Parser {
             self.advance();
             Ok(())
         } else {
-            Err(format!("{}", message))
+            Err(message.to_string())
         }
     }
 
@@ -174,7 +174,6 @@ mod tests {
         let expr = parser.parse().unwrap();
 
         println!("{:?}", expr.to_string());
-        //		assert_eq!(expr.to_string(), "B(B(L(1) + B(L(2) * L(3))) >= L(4))");
     }
 
     #[test]
@@ -234,8 +233,6 @@ mod tests {
         let tokens = scan.scan_tokens().unwrap();
         let mut parser = Parser::new(tokens);
         let expr = parser.parse().unwrap();
-        //		println!("{:?}", expr);
         assert_eq!(expr.to_string(), "U(- L(1))");
-        //		assert_eq!(expr.to_string(), "UNARY (- LITERAL 1)");
     }
 }

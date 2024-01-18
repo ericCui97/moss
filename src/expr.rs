@@ -1,6 +1,4 @@
 use crate::scanner::{LiteralValue, Token};
-use lazy_static::lazy_static;
-use std::collections::HashMap;
 #[derive(Debug, Clone)]
 pub enum Expr {
     // grouping expression like (1+2)
@@ -13,26 +11,10 @@ pub enum Expr {
     Unary(Token, Box<Expr>),
 }
 
-//lazy_static! {
-//    static ref EXPR_MAP:HashMap<Expr, &'static str> = {
-//        [
-//	        (Expr::Grouping,"G")
-//        ]
-//        .iter()
-//		.cloned()
-//        .collect()
-//    };
-//}
 
 impl Expr {
-    //	pub fn to_string(&self) -> String {
-    //		match self {
-    //			Expr::Grouping(e) => format!("(GROUP {})", e.to_string()),
-    //			Expr::Binary(left, op, right) => format!("BINARY ({} {} {})", op.lexeme, left.to_string(), right.to_string()),
-    //			Expr::Literal(lit) => format!("LITERAL {}", lit.to_string()),
-    //			Expr::Unary(op, right) => format!("UNARY ({} {})", op.lexeme, right.to_string()),
-    //		}
-    //	}
+
+    #[allow(clippy::inherent_to_string)]
     pub fn to_string(&self) -> String {
         match self {
             Expr::Grouping(e) => {

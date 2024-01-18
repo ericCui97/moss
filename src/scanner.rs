@@ -65,7 +65,7 @@ impl<'a> Scanner<'a> {
             literal: None,
             line_number: self.line,
         });
-        if errs.len() > 0 {
+        if !errs.is_empty() {
             return Err(errs.join("\n"));
         }
         Ok(self.tokens.clone())
@@ -74,16 +74,46 @@ impl<'a> Scanner<'a> {
         let c = self.advance();
         // dbg!("scan_token", c);
         match c {
-            '(' => Ok(self.add_token(TokenType::LEFT_PAREN)),
-            ')' => Ok(self.add_token(TokenType::RIGHT_PAREN)),
-            '{' => Ok(self.add_token(TokenType::LEFT_BRACE)),
-            '}' => Ok(self.add_token(TokenType::RIGHT_BRACE)),
-            ',' => Ok(self.add_token(TokenType::COMMA)),
-            '.' => Ok(self.add_token(TokenType::DOT)),
-            '-' => Ok(self.add_token(TokenType::MINUS)),
-            '+' => Ok(self.add_token(TokenType::PLUS)),
-            ';' => Ok(self.add_token(TokenType::SEMICOLON)),
-            '*' => Ok(self.add_token(TokenType::STAR)),
+            '(' => {
+                self.add_token(TokenType::LEFT_PAREN);
+                Ok(())
+            },
+            ')' => {
+                self.add_token(TokenType::RIGHT_PAREN);
+                Ok(())
+            },
+            '{' => {
+                self.add_token(TokenType::LEFT_BRACE);
+                Ok(())
+            },
+            '}' => {
+                self.add_token(TokenType::RIGHT_BRACE);
+                Ok(())
+            },
+            ',' => {
+                self.add_token(TokenType::COMMA);
+                Ok(())
+            },
+            '.' => {
+                self.add_token(TokenType::DOT);
+                Ok(())
+            },
+            '-' => {
+                self.add_token(TokenType::MINUS);
+                Ok(())
+            },
+            '+' => {
+                self.add_token(TokenType::PLUS);
+                Ok(())
+            },
+            ';' => {
+                self.add_token(TokenType::SEMICOLON);
+                Ok(())
+            },
+            '*' => {
+                self.add_token(TokenType::STAR);
+                Ok(())
+            },
             // '/' => {
             //     loop {
             //         if self.is_at_end() || self.peek() == '\n' {
@@ -97,9 +127,11 @@ impl<'a> Scanner<'a> {
             ' ' | '\r' | '\t' => Ok(()),
             '!' => {
                 if self.match_char('=') {
-                    Ok(self.add_token(TokenType::BANG_EQUAL))
+                    self.add_token(TokenType::BANG_EQUAL);
+                    Ok(())
                 } else {
-                    Ok(self.add_token(TokenType::BANG))
+                    self.add_token(TokenType::BANG);
+                    Ok(())
                 }
             }
             // comments 注释
@@ -122,23 +154,29 @@ impl<'a> Scanner<'a> {
             }
             '=' => {
                 if self.match_char('=') {
-                    Ok(self.add_token(TokenType::EQUAL_EQUAL))
+                    self.add_token(TokenType::EQUAL_EQUAL);
+                    Ok(())
                 } else {
-                    Ok(self.add_token(TokenType::EQUAL))
+                    self.add_token(TokenType::EQUAL);
+                    Ok(())
                 }
             }
             '<' => {
                 if self.match_char('=') {
-                    Ok(self.add_token(TokenType::LESS_EQUAL))
+                    self.add_token(TokenType::LESS_EQUAL);
+                    Ok(())
                 } else {
-                    Ok(self.add_token(TokenType::LESS))
+                    self.add_token(TokenType::LESS);
+                    Ok(())
                 }
             }
             '>' => {
                 if self.match_char('=') {
-                    Ok(self.add_token(TokenType::GREATER_EQUAL))
+                    self.add_token(TokenType::GREATER_EQUAL);
+                    Ok(())
                 } else {
-                    Ok(self.add_token(TokenType::GREATER))
+                    self.add_token(TokenType::GREATER);
+                    Ok(())
                 }
             }
             '"' => self.string(),
@@ -154,14 +192,14 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    fn peek(self: &Self) -> char {
+    fn peek(&self) -> char {
         if self.is_at_end() {
             return '\0';
         }
         self.source.chars().nth(self.current as usize).unwrap()
     }
 
-    fn is_at_end(self: &Self) -> bool {
+    fn is_at_end(&self) -> bool {
         self.current >= self.source.len() as u64
     }
     fn match_char(&mut self, c: char) -> bool {
@@ -174,27 +212,22 @@ impl<'a> Scanner<'a> {
         self.current += 1;
         true
     }
-    fn advance(self: &mut Self) -> char {
+    fn advance(&mut self) -> char {
         let c = self.source.chars().nth(self.current as usize).unwrap();
         self.current += 1;
-        c as char
+        c
     }
-    fn add_token(self: &mut Self, token_type: TokenType) {
+    fn add_token(&mut self, token_type: TokenType) {
         self.add_token_lit(token_type, None);
     }
-    fn add_token_lit(self: &mut Self, token_type: TokenType, literal: Option<LiteralValue>) {
+    fn add_token_lit(&mut self, token_type: TokenType, literal: Option<LiteralValue>) {
         let text: String = String::from_utf8_lossy(
             &self.source.as_bytes()[self.start as usize..self.current as usize],
         )
         .to_string();
-        self.tokens.push(Token {
-            token_type,
-            lexeme: text,
-            literal,
-            line_number: self.line,
-        });
+        self.tokens.push(Token::new(token_type, text, literal, self.line));
     }
-    fn string(self: &mut Self) -> Result<(), String> {
+    fn string(&mut self) -> Result<(), String> {
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
                 self.line += 1;
@@ -217,7 +250,7 @@ impl<'a> Scanner<'a> {
         Ok(())
     }
 
-    fn number(self: &mut Self) -> Result<(), String> {
+    fn number(&mut self) -> Result<(), String> {
         while is_digit(self.peek()) {
             self.advance();
         }
@@ -235,7 +268,7 @@ impl<'a> Scanner<'a> {
                 self.add_token_lit(TokenType::NUMBER, Some(LiteralValue::NUMBER(v)));
                 Ok(())
             }
-            Err(e) => return Err(format!("parse number error: {}", e)),
+            Err(e) => Err(format!("parse number error: {}", e))
         }
     }
     fn identifier(&mut self) -> Result<(), String> {
@@ -246,15 +279,16 @@ impl<'a> Scanner<'a> {
             &self.source.as_bytes()[self.start as usize..self.current as usize],
         );
         let mut token_type = TokenType::IDENTIFIER;
-        match KEYWORDS.get(sub_string.as_ref()) {
-            Some(keyword_type) => token_type = *keyword_type,
-            None => (),
-        }
+        // match KEYWORDS.get(sub_string.as_ref()) {
+        //     Some(keyword_type) => token_type = *keyword_type,
+        //     None => (),
+        // }
+        if let Some(keyword_type) = KEYWORDS.get(sub_string.as_ref()) { token_type = *keyword_type }
         self.add_token(token_type);
 
         Ok(())
     }
-    fn peek_next(self: &Self) -> char {
+    fn peek_next(&self) -> char {
         if self.current + 1 >= self.source.len() as u64 {
             return '\0';
         }
@@ -266,6 +300,7 @@ impl<'a> Scanner<'a> {
 }
 
 #[allow(non_camel_case_types)]
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenType {
     // Single-character tokens.
@@ -334,7 +369,7 @@ pub enum TokenType {
 
     EOF, // end of file
 }
-
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum LiteralValue {
     STRING(String),
@@ -357,7 +392,7 @@ impl LiteralValue {
         }
     }
 }
-
+#[allow(clippy::inherent_to_string)]
 impl LiteralValue {
     pub fn to_string(&self) -> String {
         match self {
@@ -392,9 +427,6 @@ impl Token {
             line_number,
         }
     }
-    pub fn to_string(&self) -> String {
-        format!("{:?} {} {:?}", self.token_type, self.lexeme, self.literal)
-    }
 }
 
 impl std::fmt::Display for Token {
@@ -404,11 +436,11 @@ impl std::fmt::Display for Token {
 }
 
 fn is_digit(c: char) -> bool {
-    c >= '0' && c <= '9'
+    c.is_ascii_digit()
 }
 
 fn is_alpha(c: char) -> bool {
-    c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_'
+    c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == '_'
 }
 
 fn is_alpha_numeric(c: char) -> bool {
@@ -489,7 +521,7 @@ mod tests {
     fn test_string_err() {
         let mut scanner = Scanner::new("\"hello world");
         let tokens = scanner.scan_tokens();
-        assert_eq!(tokens.is_err(), true);
+        assert!(tokens.is_err());
     }
     #[test]
     fn test_string2() {
