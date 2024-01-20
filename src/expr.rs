@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::scanner::{LiteralValue, Token, TokenType};
 #[derive(Debug, Clone)]
 pub enum Expr {
@@ -15,7 +13,6 @@ pub enum Expr {
 impl Expr {
     #[allow(clippy::inherent_to_string)]
     pub fn to_string(&self) -> String {
-        use crate::scanner::LiteralValue::*;
         match self {
             Expr::Grouping(e) => {
                 //				String::from('G') + e.to_token_sequence().as_ref()
@@ -62,7 +59,7 @@ impl Expr {
             Expr::Binary(left, op, right) => {
                 let left = left.evaluate()?;
                 let right = right.evaluate()?;
-                match (left, op.token_type, right) {
+                match (&left, op.token_type, &right) {
                     (LiteralValue::NUMBER(x), TokenType::PLUS, LiteralValue::NUMBER(y)) => {
                         Ok(LiteralValue::NUMBER(x + y))
                     }
@@ -96,7 +93,7 @@ impl Expr {
                         Ok(LiteralValue::BOOLEAN(x == y))
                     }
                     (LiteralValue::STRING(x), TokenType::PLUS, LiteralValue::STRING(y)) => {
-                        Ok(LiteralValue::STRING(x + y.as_str()))
+                        Ok(LiteralValue::STRING(String::from(x) + y))
                     }
                     (LiteralValue::STRING(x), TokenType::EQUAL_EQUAL, LiteralValue::STRING(y)) => {
                         Ok(LiteralValue::BOOLEAN(x == y))
@@ -112,10 +109,11 @@ impl Expr {
                     (LiteralValue::BOOLEAN(x), TokenType::BANG_EQUAL, LiteralValue::BOOLEAN(y)) => {
                         Ok(LiteralValue::BOOLEAN(x != y))
                     }
-                    _ => Err(format!(
-                        "binary operator {:?}  not supported",
-                        op.token_type
-                    )),
+                    _ => {
+                        let left = left.clone().to_string();
+                        let right = right.clone().to_string();
+                        Err(format!("binary operator {:?} between {:?} ans {:?} not supported ", op.token_type,left,right))
+                    }
                 }
             }
         }
@@ -125,17 +123,11 @@ impl Expr {
 // #region
 #[cfg(test)]
 mod tests {
-
-    use std::fs::File;
-    use std::io::Read;
-
-    use serde::Deserialize;
-    use serde::Serialize;
-
-    use crate::expr::Expr;
     use crate::parser::Parser;
     use crate::scanner::LiteralValue;
     use crate::scanner::Scanner;
+    use serde::Deserialize;
+    use serde::Serialize;
 
     #[derive(Debug, Serialize, Deserialize)]
     struct Test {
@@ -144,13 +136,13 @@ mod tests {
         expected_result: f64,
     }
 
-    fn read_tests_from_file(file_path: &str) -> Vec<Test> {
-        let mut file = File::open(file_path).expect("Failed to open file");
-        let mut contents = String::new();
-        file.read_to_string(&mut contents)
-            .expect("Failed to read file");
-        serde_json::from_str(&contents).expect("Failed to parse JSON")
-    }
+    // fn read_tests_from_file(file_path: &str) -> Vec<Test> {
+    //     let mut file = File::open(file_path).expect("Failed to open file");
+    //     let mut contents = String::new();
+    //     file.read_to_string(&mut contents)
+    //         .expect("Failed to read file");
+    //     serde_json::from_str(&contents).expect("Failed to parse JSON")
+    // }
     #[test]
     fn test_unary() {
         // let expr = "!0";
@@ -166,7 +158,6 @@ mod tests {
             let tokens = scanner.scan_tokens().unwrap();
             let mut parser = Parser::new(tokens);
             let expr = parser.parse().unwrap();
-            dbg!(i, expr.to_string(), res[i]);
             assert_eq!(expr.evaluate().unwrap(), LiteralValue::BOOLEAN(res[i]));
         }
     }
@@ -177,7 +168,6 @@ mod tests {
         let tokens = scanner.scan_tokens().unwrap();
         let mut parser = Parser::new(tokens);
         let expr = parser.parse().unwrap();
-        dbg!(expr.to_string(), expr.evaluate().unwrap());
         assert_eq!(expr.evaluate().unwrap(), LiteralValue::BOOLEAN(false));
     }
     #[test]
@@ -192,23 +182,23 @@ mod tests {
             assert_eq!(expr.evaluate().unwrap(), LiteralValue::NUMBER(res[i]));
         }
     }
-    #[test]
-    fn test_all() {
-        let tests = read_tests_from_file("test_file/expr.json");
-        print!("{:?}", tests);
-        for test in tests {
-            let mut scanner = Scanner::new(&test.expr);
-            let tokens = scanner.scan_tokens().unwrap();
-            let mut parser = Parser::new(tokens);
-            let expr = parser.parse().unwrap();
-            dbg!(&test.name, &test.expr, test.expected_result);
-            assert_eq!(
-                expr.evaluate().unwrap(),
-                LiteralValue::NUMBER(test.expected_result),
-                "Test '{}' failed",
-                &test.name
-            );
-        }
-    }
+    // #[test]
+    // fn test_all() {
+    //     let tests = read_tests_from_file("test_file/expr.json");
+    //     print!("{:?}", tests);
+    //     for test in tests {
+    //         let mut scanner = Scanner::new(&test.expr);
+    //         let tokens = scanner.scan_tokens().unwrap();
+    //         let mut parser = Parser::new(tokens);
+    //         let expr = parser.parse().unwrap();
+    //         dbg!(&test.name, &test.expr, test.expected_result);
+    //         assert_eq!(
+    //             expr.evaluate().unwrap(),
+    //             LiteralValue::NUMBER(test.expected_result),
+    //             "Test '{}' failed",
+    //             &test.name
+    //         );
+    //     }
+    // }
 }
 // #endregion

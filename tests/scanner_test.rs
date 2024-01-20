@@ -62,7 +62,6 @@ mod tests {
         let mut scanner = Scanner::new("\"hello world\"");
         let tokens = scanner.scan_tokens().unwrap();
         assert_eq!(tokens.len(), 2);
-        dbg!(&tokens[0]);
         assert_eq!(tokens[0].token_type, TokenType::STRING);
         assert_eq!(tokens[0].lexeme, "\"hello world\"");
         assert_eq!(tokens[1].token_type, TokenType::EOF);
@@ -78,7 +77,6 @@ mod tests {
         let mut scanner = Scanner::new(r#""hello world""#);
         let tokens = scanner.scan_tokens().unwrap();
         assert_eq!(tokens.len(), 2);
-        dbg!(&tokens[0]);
         assert_eq!(tokens[0].token_type, TokenType::STRING);
         assert_eq!(tokens[0].lexeme, "\"hello world\"");
         assert_eq!(tokens[1].token_type, TokenType::EOF);
@@ -91,9 +89,6 @@ mod tests {
     fn test_number() {
         let mut scanner = Scanner::new("123 123.456 0.1");
         let tokens = scanner.scan_tokens().unwrap();
-        for t in &tokens {
-            dbg!(t);
-        }
         assert_eq!(tokens[0].token_type, TokenType::NUMBER);
         assert_eq!(tokens[0].lexeme, "123");
         assert_eq!(tokens[0].literal, Some(LiteralValue::NUMBER(123.0)));
@@ -113,9 +108,6 @@ mod tests {
     fn test_identifier() {
         let mut scanner = Scanner::new(r#"var_a = "hello world";"#);
         let tokens = scanner.scan_tokens().unwrap();
-        for t in &tokens {
-            dbg!(t);
-        }
         assert_eq!(tokens[0].token_type, TokenType::IDENTIFIER);
         assert_eq!(tokens[0].lexeme, "var_a");
         assert_eq!(tokens[1].token_type, TokenType::EQUAL);
@@ -132,7 +124,6 @@ mod tests {
         "#,
         );
         let tokens = scanner.scan_tokens().unwrap();
-        dbg!(tokens[7].token_type);
         assert_eq!(tokens[0].token_type, TokenType::VAR);
         assert_eq!(tokens[1].token_type, TokenType::IDENTIFIER);
         assert_eq!(tokens[2].token_type, TokenType::EQUAL);

@@ -235,18 +235,17 @@ impl<'a> Scanner<'a> {
                 self.line += 1;
             }
             self.advance();
-            println!("peek ,{}", self.peek());
         }
         // empty string
-        if self.peek() == '"' {
-            dbg!("empty string");
-            self.advance();
-            self.add_token_lit(
-                TokenType::STRING,
-                Some(LiteralValue::STRING("".to_string())),
-            );
-            return Ok(());
-        }
+        // if self.peek() == '"' {
+        //     dbg!("empty string");
+        //     self.advance();
+        //     self.add_token_lit(
+        //         TokenType::STRING,
+        //         Some(LiteralValue::STRING("".to_string())),
+        //     );
+        //     return Ok(());
+        // }
         if self.is_at_end() {
             return Err("undeterminded string".to_string());
         }
@@ -415,14 +414,23 @@ impl LiteralValue {
     }
 }
 
+// impl Copy for LiteralValue {
+//     fn copy(&self) -> Self {
+//         match self {
+//             LiteralValue::NUMBER(n) => LiteralValue::NUMBER(*n),
+//             LiteralValue::STRING(s) => LiteralValue::STRING(s.clone()),
+//             LiteralValue::BOOLEAN(b) => LiteralValue::BOOLEAN(*b),
+//             LiteralValue::NIL => LiteralValue::NIL,
+//         }
+//     }
+// }
+
 #[allow(clippy::inherent_to_string)]
 impl LiteralValue {
     pub fn to_string(&self) -> String {
         match self {
             LiteralValue::NUMBER(n) => n.to_string(),
             LiteralValue::STRING(s) => s.to_string(),
-            // LiteralValue::TRUE => "true".to_string(),
-            // LiteralValue::FALSE => "false".to_string(),
             LiteralValue::BOOLEAN(b) => b.to_string(),
             LiteralValue::NIL => "nil".to_string(),
         }
@@ -519,7 +527,6 @@ mod tests {
         let mut scanner = Scanner::new("\"hello world\"");
         let tokens = scanner.scan_tokens().unwrap();
         assert_eq!(tokens.len(), 2);
-        dbg!(&tokens[0]);
         assert_eq!(tokens[0].token_type, TokenType::STRING);
         assert_eq!(tokens[0].lexeme, "\"hello world\"");
         assert_eq!(tokens[1].token_type, TokenType::EOF);
@@ -535,7 +542,6 @@ mod tests {
         let mut scanner = Scanner::new(r#""hello world""#);
         let tokens = scanner.scan_tokens().unwrap();
         assert_eq!(tokens.len(), 2);
-        dbg!(&tokens[0]);
         assert_eq!(tokens[0].token_type, TokenType::STRING);
         assert_eq!(tokens[0].lexeme, "\"hello world\"");
         assert_eq!(tokens[1].token_type, TokenType::EOF);
@@ -548,9 +554,6 @@ mod tests {
     fn test_number() {
         let mut scanner = Scanner::new("123 123.456 0.1");
         let tokens = scanner.scan_tokens().unwrap();
-        for t in &tokens {
-            dbg!(t);
-        }
         assert_eq!(tokens[0].token_type, TokenType::NUMBER);
         assert_eq!(tokens[0].lexeme, "123");
         assert_eq!(tokens[0].literal, Some(LiteralValue::NUMBER(123.0)));
@@ -570,9 +573,6 @@ mod tests {
     fn test_identifier() {
         let mut scanner = Scanner::new(r#"var_a = "hello world";"#);
         let tokens = scanner.scan_tokens().unwrap();
-        for t in &tokens {
-            dbg!(t);
-        }
         assert_eq!(tokens[0].token_type, TokenType::IDENTIFIER);
         assert_eq!(tokens[0].lexeme, "var_a");
         assert_eq!(tokens[1].token_type, TokenType::EQUAL);
@@ -589,7 +589,6 @@ mod tests {
         "#,
         );
         let tokens = scanner.scan_tokens().unwrap();
-        dbg!(tokens[7].token_type);
         assert_eq!(tokens[0].token_type, TokenType::VAR);
         assert_eq!(tokens[1].token_type, TokenType::IDENTIFIER);
         assert_eq!(tokens[2].token_type, TokenType::EQUAL);
