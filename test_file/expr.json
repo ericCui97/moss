@@ -1,0 +1,97 @@
+[
+        {
+            "name": "test_case_1",
+            "expr": "!0",
+            "expected_result": true
+        },
+        {
+            "name": "test_case_2",
+            "expr": "!1",
+            "expected_result": false
+        },
+        {
+            "name": "test_case_3",
+            "expr": "!true",
+            "expected_result": false
+        },
+        {
+            "name": "test_case_4",
+            "expr": "!false",
+            "expected_result": true
+        },
+        {
+            "name": "test_case_5",
+            "expr": "!nil",
+            "expected_result": true
+        },
+        {
+            "name": "test_case_6",
+            "expr": "!\"hello world\"",
+            "expected_result": false
+        },
+        {
+            "name": "test_case_7",
+            "expr": "1",
+            "expected_result": 1.0
+        },
+        {
+            "name": "test_case_8",
+            "expr": "-1",
+            "expected_result": -1.0
+        },
+        {
+            "name": "test_case_9",
+            "expr": "-0",
+            "expected_result": 0.0
+        },
+        {
+            "name": "test_case_10",
+            "expr": "-1.1",
+            "expected_result": -1.1
+        },
+        {
+            "name": "test_case_11",
+            "expr": "-0.1",
+            "expected_result": -0.1
+        },
+        {
+            "name": "test_case_12",
+            "expr": "1+2",
+            "expected_result": 3.0
+        },
+        {
+            "name": "test_case_13",
+            "expr": "1-2",
+            "expected_result": -1.0
+        },
+        {
+            "name": "test_case_14",
+            "expr": "1*2",
+            "expected_result": 2.0
+        },
+        {
+            "name": "test_case_15",
+            "expr": "1/2",
+            "expected_result": 0.5
+        },
+        {
+            "name": "test_case_16",
+            "expr": "1>2",
+            "expected_result": false
+        },
+        {
+            "name": "test_case_17",
+            "expr": "1>=2",
+            "expected_result": false
+        },
+        {
+            "name": "test_case_18",
+            "expr": "1<2",
+            "expected_result": true
+        },
+        {
+            "name": "test_case_19",
+            "expr": "1<=2",
+            "expected_result": true
+        }
+    ]
