@@ -15,7 +15,7 @@ use std::{
 fn run(interpreter: &mut Interpreter, source: &str) -> Result<(), String> {
     let scan = &mut Scanner::new(source);
     let tokens = scan.scan_tokens()?;
-    let mut parser = Parser::new(tokens);
+    let parser = Parser::new(tokens);
     let stmts = parser.parse()?;
     interpreter.interpret(&stmts)?;
     Ok(())

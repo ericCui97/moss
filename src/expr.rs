@@ -16,6 +16,7 @@ pub enum Expr {
 }
 impl Expr {
     #[allow(clippy::inherent_to_string)]
+    #[allow(dead_code)]
     pub fn to_string(&self) -> String {
         match self {
             Expr::Grouping(e) => {
@@ -192,7 +193,7 @@ mod tests {
         for (i, expr) in exprs.iter().enumerate() {
             let mut scanner = Scanner::new(expr);
             let tokens = scanner.scan_tokens().unwrap();
-            let mut parser = Parser::new(tokens);
+            let parser = Parser::new(tokens);
             let expr = parser.parse_expression().unwrap();
             assert_eq!(expr.evaluate().unwrap(), LiteralValue::NUMBER(res[i]));
         }

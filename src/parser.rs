@@ -92,7 +92,7 @@ impl Parser {
     fn expression(&self) -> Result<Expr, String> {
         self.equality()
     }
-
+    #[cfg(test)]
     pub fn parse_expression(&self) -> Result<Expr, String> {
         self.expression()
     }
