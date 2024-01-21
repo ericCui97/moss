@@ -1,3 +1,4 @@
+use crate::stmt::Stmt;
 use crate::{
     expr::Expr,
     scanner::{LiteralValue, Token, TokenType},
@@ -17,11 +18,83 @@ impl Parser {
             current: RefCell::from(0),
         }
     }
-    pub fn parse(&mut self) -> Result<Expr, String> {
-        self.expression()
+    pub fn parse(&self) -> Result<Vec<Stmt>, String> {
+        let mut statements = vec![];
+        let mut errs = vec![];
+        while !self.is_at_end() {
+            let stmt = self.decaration();
+            match stmt {
+                Ok(s) => statements.push(s),
+                Err(e) => errs.push(e),
+            }
+        }
+        if errs.len() > 0 {
+            Err(errs.join("\n"))
+        } else {
+            Ok(statements)
+        }
     }
+
+    pub fn decaration(&self) -> Result<Stmt, String> {
+        if self.match_token(&[TokenType::VAR]) {
+            match self.var_declaration() {
+                Ok(stmt) => Ok(stmt),
+                Err(e) => {
+                    // self.synchronize();
+                    Err(e)
+                }
+            }
+        } else {
+            self.statement()
+        }
+    }
+
+    // pub fn synchronize(&self) {
+    //     todo!()
+    // }
+
+    pub fn var_declaration(&self) -> Result<Stmt, String> {
+        // var name = expression;
+        let name = self.consume(TokenType::IDENTIFIER, "expect variable name")?;
+        let initializer = if self.match_token(&[TokenType::EQUAL]) {
+            self.expression()?
+        } else {
+            // 如果没有初始化，那么就是nil
+            Expr::Literal(LiteralValue::NIL)
+        };
+        self.consume(
+            TokenType::SEMICOLON,
+            "expect ';' after variable declaration",
+        )?;
+        Ok(Stmt::Var { name, initializer })
+    }
+
+    pub fn statement(&self) -> Result<Stmt, String> {
+        if self.match_token(&[TokenType::PRINT]) {
+            self.print_statement()
+        } else {
+            self.expression_statement()
+        }
+    }
+
+    fn expression_statement(&self) -> Result<Stmt, String> {
+        let expr = self.expression()?;
+        self.consume(TokenType::SEMICOLON, "expect ';' after expression")?;
+        Ok(Stmt::Expression { expression: expr })
+    }
+
+    fn print_statement(&self) -> Result<Stmt, String> {
+        let value = self.expression()?;
+        self.consume(TokenType::SEMICOLON, "expect ';' after value")?;
+        Ok(Stmt::Print { expression: value })
+    }
+
     fn expression(&self) -> Result<Expr, String> {
         self.equality()
+    }
+
+    pub fn parse_expression(&self) -> Result<Expr, String> {
+        self.expression()
     }
 
     fn match_token(&self, types: &[TokenType]) -> bool {
@@ -101,20 +174,48 @@ impl Parser {
     }
 
     fn primary(&self) -> Result<Expr, String> {
-        if self.match_token(&[TokenType::LEFT_PAREN]) {
-            let expr = self.expression()?;
-            self.consume(TokenType::RIGHT_PAREN, "expect ')' after expression")?;
-            Ok(Expr::Grouping(Box::from(expr)))
-        } else {
-            let token = self.peek();
-            self.advance();
-            Ok(Expr::Literal(LiteralValue::from_token(token).unwrap()))
+        // if self.match_token(&[TokenType::LEFT_PAREN]) {
+        //     let expr = self.expression()?;
+        //     self.consume(TokenType::RIGHT_PAREN, "expect ')' after expression")?;
+        //     Ok(Expr::Grouping(Box::from(expr)))
+        // } else {
+        //     let token = self.peek();
+        //     self.advance();
+        //     Ok(Expr::Literal(LiteralValue::from_token(token).unwrap()))
+        // }
+        let token = self.peek();
+        let result;
+        match token.token_type {
+            TokenType::LEFT_PAREN => {
+                self.advance();
+                let expr = self.expression()?;
+                self.consume(TokenType::RIGHT_PAREN, "expect ')' after expression")?;
+                result = Expr::Grouping(Box::from(expr));
+            }
+            TokenType::NUMBER
+            | TokenType::STRING
+            | TokenType::TRUE
+            | TokenType::FALSE
+            | TokenType::NIL => {
+                self.advance();
+                result = Expr::Literal(LiteralValue::from_token(token).unwrap());
+            }
+            // 使用变量的时候
+            TokenType::IDENTIFIER => {
+                self.advance();
+                result = Expr::Variable(token.clone());
+            }
+            _ => {
+                return Err(format!("expect expression, got {:?}", token.token_type));
+            }
         }
+        Ok(result)
     }
-    fn consume(&self, token_type: TokenType, message: &str) -> Result<(), String> {
+    fn consume(&self, token_type: TokenType, message: &str) -> Result<Token, String> {
         if self.check(&token_type) {
             self.advance();
-            Ok(())
+            let token = self.previous();
+            Ok(token.clone())
         } else {
             Err(message.to_string())
         }
@@ -157,60 +258,69 @@ mod tests {
     use super::*;
     use crate::scanner::Scanner;
 
+    fn unwrap_stmts_as_single_expr(stmts: Vec<Stmt>) -> Expr {
+        let mut expr = Expr::Literal(LiteralValue::NIL);
+        for stmt in stmts {
+            match stmt {
+                Stmt::Expression { expression } => expr = expression,
+                _ => panic!("no expression contains in stmts"),
+            }
+        }
+        expr
+    }
     #[test]
     fn test_parser() {
-        let source = "1+2*3";
+        let source = "1+2*3;";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
-        let mut parser = Parser::new(tokens);
-        let expr = parser.parse().unwrap();
+        let parser = Parser::new(tokens);
+        let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
         //		println!("{:?}", expr.to_string());
         assert_eq!(expr.to_string(), "B(L(1) + B(L(2) * L(3)))");
     }
 
     #[test]
     fn test_comparison() {
-        let source = "1+2*3>=4";
+        let source = "1+2*3>=4;";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
-        let mut parser = Parser::new(tokens);
-        let expr = parser.parse().unwrap();
-
+        let parser = Parser::new(tokens);
+        let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
         println!("{:?}", expr.to_string());
     }
 
     #[test]
     fn test_addition() {
-        let source = "1+2";
+        let source = "1+2;";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
-        let mut parser = Parser::new(tokens);
-        let expr = parser.parse().unwrap();
+        let parser = Parser::new(tokens);
+        let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
         //		println!("{:?}", expr);
         assert_eq!(expr.to_string(), "B(L(1) + L(2))");
     }
 
     #[test]
     fn test_simple_math_expr_parse_with_paren() {
-        let source = "(1+21)*2432";
+        let source = "(1+21)*2432;";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
         for token in &tokens {
             println!("{:?}", token);
         }
-        let mut parser = Parser::new(tokens);
-        let expr = parser.parse().unwrap();
+        let parser = Parser::new(tokens);
+        let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
         //		println!("{:?}", expr.to_string());
         assert_eq!(expr.to_string(), "B(G(B(L(1) + L(21))) * L(2432))");
     }
 
     #[test]
     fn test_complex_expression() {
-        let source = "(1.2+2)*3.4>=4";
+        let source = "(1.2+2)*3.4>=4;";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
-        let mut parser = Parser::new(tokens);
-        let expr = parser.parse().unwrap();
+        let parser = Parser::new(tokens);
+        let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
         //		println!("{:?}", expr.to_string());
         assert_eq!(
             expr.to_string(),
@@ -220,22 +330,22 @@ mod tests {
 
     #[test]
     fn test_simple_math_expr_parse2() {
-        let source = "1+2*3";
+        let source = "1+2*3;";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
-        let mut parser = Parser::new(tokens);
-        let expr = parser.parse().unwrap();
+        let parser = Parser::new(tokens);
+        let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
         //		println!("{:?}", expr);
         assert_eq!(expr.to_string(), "B(L(1) + B(L(2) * L(3)))");
     }
 
     #[test]
     fn test_unary() {
-        let source = "-1";
+        let source = "-1;";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
-        let mut parser = Parser::new(tokens);
-        let expr = parser.parse().unwrap();
+        let parser = Parser::new(tokens);
+        let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
         assert_eq!(expr.to_string(), "U(- L(1))");
     }
 }

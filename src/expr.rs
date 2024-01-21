@@ -1,5 +1,6 @@
+use crate::environment::get;
 use crate::scanner::{LiteralValue, Token, TokenType};
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     // grouping expression like (1+2)
     Grouping(Box<Expr>),
@@ -9,6 +10,9 @@ pub enum Expr {
     Literal(LiteralValue),
     // unary expression like !true
     Unary(Token, Box<Expr>),
+
+    // variable expression like var a = 1
+    Variable(Token),
 }
 impl Expr {
     #[allow(clippy::inherent_to_string)]
@@ -35,11 +39,19 @@ impl Expr {
                 //				format!("{} {}",op.lexeme,right.to_token_sequence())
                 format!("U({} {})", op.lexeme, right.to_string())
             }
+            Expr::Variable(name) => {
+                format!("V({})", name.lexeme)
+            }
         }
     }
 
+    // 执行表达式
     pub fn evaluate(&self) -> Result<LiteralValue, String> {
         match self {
+            Expr::Variable(name) => match get(name.lexeme.clone()) {
+                Some(v) => Ok(v),
+                None => Err(format!("variable {} not found", name.lexeme)),
+            },
             Expr::Literal(lit) => Ok(lit.clone()),
             Expr::Grouping(e) => e.evaluate(),
             Expr::Unary(op, right) => {
@@ -112,7 +124,10 @@ impl Expr {
                     _ => {
                         let left = left.clone().to_string();
                         let right = right.clone().to_string();
-                        Err(format!("binary operator {:?} between {:?} ans {:?} not supported ", op.token_type,left,right))
+                        Err(format!(
+                            "binary operator {:?} between {:?} ans {:?} not supported ",
+                            op.token_type, left, right
+                        ))
                     }
                 }
             }
@@ -156,8 +171,8 @@ mod tests {
         for (i, expr) in exprs.iter().enumerate() {
             let mut scanner = Scanner::new(expr);
             let tokens = scanner.scan_tokens().unwrap();
-            let mut parser = Parser::new(tokens);
-            let expr = parser.parse().unwrap();
+            let parser = Parser::new(tokens);
+            let expr = parser.parse_expression().unwrap();
             assert_eq!(expr.evaluate().unwrap(), LiteralValue::BOOLEAN(res[i]));
         }
     }
@@ -166,8 +181,8 @@ mod tests {
         let expr = "!\"hello world\"";
         let mut scanner = Scanner::new(expr);
         let tokens = scanner.scan_tokens().unwrap();
-        let mut parser = Parser::new(tokens);
-        let expr = parser.parse().unwrap();
+        let parser = Parser::new(tokens);
+        let expr = parser.parse_expression().unwrap();
         assert_eq!(expr.evaluate().unwrap(), LiteralValue::BOOLEAN(false));
     }
     #[test]
@@ -178,27 +193,9 @@ mod tests {
             let mut scanner = Scanner::new(expr);
             let tokens = scanner.scan_tokens().unwrap();
             let mut parser = Parser::new(tokens);
-            let expr = parser.parse().unwrap();
+            let expr = parser.parse_expression().unwrap();
             assert_eq!(expr.evaluate().unwrap(), LiteralValue::NUMBER(res[i]));
         }
     }
-    // #[test]
-    // fn test_all() {
-    //     let tests = read_tests_from_file("test_file/expr.json");
-    //     print!("{:?}", tests);
-    //     for test in tests {
-    //         let mut scanner = Scanner::new(&test.expr);
-    //         let tokens = scanner.scan_tokens().unwrap();
-    //         let mut parser = Parser::new(tokens);
-    //         let expr = parser.parse().unwrap();
-    //         dbg!(&test.name, &test.expr, test.expected_result);
-    //         assert_eq!(
-    //             expr.evaluate().unwrap(),
-    //             LiteralValue::NUMBER(test.expected_result),
-    //             "Test '{}' failed",
-    //             &test.name
-    //         );
-    //     }
-    // }
 }
 // #endregion
