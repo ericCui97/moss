@@ -28,7 +28,7 @@ impl Parser {
                 Err(e) => errs.push(e),
             }
         }
-        if errs.len() > 0 {
+        if !errs.is_empty() {
             Err(errs.join("\n"))
         } else {
             Ok(statements)
@@ -184,13 +184,12 @@ impl Parser {
         //     Ok(Expr::Literal(LiteralValue::from_token(token).unwrap()))
         // }
         let token = self.peek();
-        let result;
         match token.token_type {
             TokenType::LEFT_PAREN => {
                 self.advance();
                 let expr = self.expression()?;
                 self.consume(TokenType::RIGHT_PAREN, "expect ')' after expression")?;
-                result = Expr::Grouping(Box::from(expr));
+               Ok(Expr::Grouping(Box::from(expr)))
             }
             TokenType::NUMBER
             | TokenType::STRING
@@ -198,18 +197,15 @@ impl Parser {
             | TokenType::FALSE
             | TokenType::NIL => {
                 self.advance();
-                result = Expr::Literal(LiteralValue::from_token(token).unwrap());
+                Ok(Expr::Literal(LiteralValue::from_token(token).unwrap()))
             }
             // 使用变量的时候
             TokenType::IDENTIFIER => {
                 self.advance();
-                result = Expr::Variable(token.clone());
+                Ok(Expr::Variable(token.clone()))
             }
-            _ => {
-                return Err(format!("expect expression, got {:?}", token.token_type));
-            }
+            _ => Err(format!("expect expression, got {:?}", token.token_type))
         }
-        Ok(result)
     }
     fn consume(&self, token_type: TokenType, message: &str) -> Result<Token, String> {
         if self.check(&token_type) {

@@ -60,11 +60,11 @@ impl Expr {
                 match op.token_type {
                     TokenType::MINUS => match right {
                         Ok(LiteralValue::NUMBER(n)) => Ok(LiteralValue::NUMBER(-n)),
-                        _ => Err(format!("unary minus can only apply to number")),
+                        _ => Err("unary minus can only apply to number".to_string()),
                     },
                     TokenType::BANG => match right.unwrap().unwrap_as_boolean() {
-                        LiteralValue::BOOLEAN(b) => Ok(LiteralValue::BOOLEAN(!b.clone())),
-                        _ => Err(format!("unary ! can only apply to boolean")),
+                        LiteralValue::BOOLEAN(b) => Ok(LiteralValue::BOOLEAN(!b)),
+                        _ => Err("unary ! can only apply to boolean".to_string()),
                     },
                     _ => Err(format!("unary operator {:?} not supported", op.token_type)),
                 }
@@ -167,8 +167,8 @@ mod tests {
         // let mut parser = Parser::new(tokens);
         // let expr = parser.parse().unwrap();
         // assert_eq!(expr.evaluate().unwrap(),LiteralValue::BOOLEAN(true));
-        let exprs = vec!["!0", "!1", "!true", "!false", "!nil"];
-        let res = vec![true, false, false, true, true];
+        let exprs = ["!0", "!1", "!true", "!false", "!nil"];
+        let res = [true, false, false, true, true];
         for (i, expr) in exprs.iter().enumerate() {
             let mut scanner = Scanner::new(expr);
             let tokens = scanner.scan_tokens().unwrap();
@@ -188,8 +188,8 @@ mod tests {
     }
     #[test]
     fn test_unary3() {
-        let exprs = vec!["1", "-1", "-0", "-1.1", "-0.1"];
-        let res = vec![1.0, -1.0, 0.0, -1.1, -0.1];
+        let exprs = ["1", "-1", "-0", "-1.1", "-0.1"];
+        let res = [1.0, -1.0, 0.0, -1.1, -0.1];
         for (i, expr) in exprs.iter().enumerate() {
             let mut scanner = Scanner::new(expr);
             let tokens = scanner.scan_tokens().unwrap();

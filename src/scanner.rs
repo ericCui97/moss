@@ -408,7 +408,7 @@ impl LiteralValue {
         match self {
             LiteralValue::NIL => LiteralValue::BOOLEAN(false),
             LiteralValue::BOOLEAN(b) => LiteralValue::BOOLEAN(*b),
-            LiteralValue::NUMBER(n) => LiteralValue::BOOLEAN(*n as f64 != 0.0f64),
+            LiteralValue::NUMBER(n) => LiteralValue::BOOLEAN(*n != 0.0f64),
             LiteralValue::STRING(s) => LiteralValue::BOOLEAN(!s.is_empty()),
         }
     }
