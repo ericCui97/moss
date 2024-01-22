@@ -34,8 +34,8 @@ impl Environment {
 
     pub fn assign(&mut self, name: String, value: LiteralValue) -> Result<(), String> {
         match self.map.get_mut(&name) {
-            Some(value) => {
-                *value = value.clone();
+            Some(v) => {
+                *v = value;
                 Ok(())
             }
             None => match &mut self.enclosing {

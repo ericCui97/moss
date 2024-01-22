@@ -14,7 +14,7 @@ pub enum Expr {
     // variable expression like var a = 1
     Variable(Token),
 
-    
+    Assign { name: Token, value: Box<Expr> },
 }
 impl Expr {
     #[allow(clippy::inherent_to_string)]
@@ -45,12 +45,20 @@ impl Expr {
             Expr::Variable(name) => {
                 format!("V({})", name.lexeme)
             }
+            Expr::Assign { name, value } => {
+                format!("A({} {})", name.lexeme, value.to_string())
+            }
         }
     }
 
     // 执行表达式
-    pub fn evaluate(&self, env: &Environment) -> Result<LiteralValue, String> {
+    pub fn evaluate(&self, env: &mut Environment) -> Result<LiteralValue, String> {
         match self {
+            Expr::Assign { name, value } => {
+                let value = value.evaluate(env)?;
+                env.assign(name.lexeme.clone(), value)?;
+                Ok(LiteralValue::NIL)
+            }
             Expr::Variable(name) => match env.get(name.lexeme.clone()) {
                 Some(v) => Ok(v.clone()),
                 None => Err(format!("variable {} not found", name.lexeme)),
@@ -177,7 +185,7 @@ mod tests {
             let tokens = scanner.scan_tokens().unwrap();
             let parser = Parser::new(tokens);
             let expr = parser.parse_expression().unwrap();
-            assert_eq!(expr.evaluate(&env).unwrap(), LiteralValue::BOOLEAN(res[i]));
+            assert_eq!(expr.evaluate(&mut env).unwrap(), LiteralValue::BOOLEAN(res[i]));
         }
     }
     #[test]
@@ -188,7 +196,7 @@ mod tests {
         let tokens = scanner.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
         let expr = parser.parse_expression().unwrap();
-        assert_eq!(expr.evaluate(&env).unwrap(), LiteralValue::BOOLEAN(false));
+        assert_eq!(expr.evaluate(&mut env).unwrap(), LiteralValue::BOOLEAN(false));
     }
     #[test]
     fn test_unary3() {
@@ -200,7 +208,7 @@ mod tests {
             let tokens = scanner.scan_tokens().unwrap();
             let parser = Parser::new(tokens);
             let expr = parser.parse_expression().unwrap();
-            assert_eq!(expr.evaluate(&env).unwrap(), LiteralValue::NUMBER(res[i]));
+            assert_eq!(expr.evaluate(&mut env).unwrap(), LiteralValue::NUMBER(res[i]));
         }
     }
 }

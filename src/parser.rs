@@ -90,7 +90,27 @@ impl Parser {
     }
 
     fn expression(&self) -> Result<Expr, String> {
-        self.equality()
+        self.assignment()
+    }
+
+    fn assignment(&self) -> Result<Expr, String> {
+        let expr = self.equality()?;
+        if self.match_token(&[TokenType::EQUAL]) {
+            let equals = self.previous();
+            let value = self.assignment()?;
+            match expr {
+                Expr::Variable(name) => {
+                    return Ok(Expr::Assign {
+                        name,
+                        value: Box::from(value),
+                    })
+                }
+                _ => {
+                    return Err(format!("invalid assignment target {:?}", expr));
+                }
+            }
+        }
+        Ok(expr)
     }
     #[cfg(test)]
     pub fn parse_expression(&self) -> Result<Expr, String> {
