@@ -62,13 +62,12 @@ fn run_prompt() -> Result<(), std::io::Error> {
 }
 fn main() {
     let args = env::args().collect::<Vec<String>>();
-    if args.len() > 2 {
-        println!("Usage: <filename>");
-        exit(64);
-    } else if args.len() == 2 {
-        run_file(&args[1]);
-    } else {
-        // REPL
-        run_prompt().unwrap();
+    match args.len() {
+        1 => run_prompt().unwrap(),
+        2 => run_file(&args[1]),
+        _ => {
+            println!("Usage: <filename>");
+            exit(64);
+        }
     }
 }
