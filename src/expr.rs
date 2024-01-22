@@ -1,4 +1,4 @@
-use crate::environment::get;
+use crate::environment::Environment;
 use crate::scanner::{LiteralValue, Token, TokenType};
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
@@ -13,6 +13,8 @@ pub enum Expr {
 
     // variable expression like var a = 1
     Variable(Token),
+
+    
 }
 impl Expr {
     #[allow(clippy::inherent_to_string)]
@@ -47,16 +49,16 @@ impl Expr {
     }
 
     // 执行表达式
-    pub fn evaluate(&self) -> Result<LiteralValue, String> {
+    pub fn evaluate(&self, env: &Environment) -> Result<LiteralValue, String> {
         match self {
-            Expr::Variable(name) => match get(name.lexeme.clone()) {
-                Some(v) => Ok(v),
+            Expr::Variable(name) => match env.get(name.lexeme.clone()) {
+                Some(v) => Ok(v.clone()),
                 None => Err(format!("variable {} not found", name.lexeme)),
             },
             Expr::Literal(lit) => Ok(lit.clone()),
-            Expr::Grouping(e) => e.evaluate(),
+            Expr::Grouping(e) => e.evaluate(env),
             Expr::Unary(op, right) => {
-                let right = (*right).evaluate();
+                let right = (*right).evaluate(env);
                 match op.token_type {
                     TokenType::MINUS => match right {
                         Ok(LiteralValue::NUMBER(n)) => Ok(LiteralValue::NUMBER(-n)),
@@ -70,8 +72,8 @@ impl Expr {
                 }
             }
             Expr::Binary(left, op, right) => {
-                let left = left.evaluate()?;
-                let right = right.evaluate()?;
+                let left = left.evaluate(env)?;
+                let right = right.evaluate(env)?;
                 match (&left, op.token_type, &right) {
                     (LiteralValue::NUMBER(x), TokenType::PLUS, LiteralValue::NUMBER(y)) => {
                         Ok(LiteralValue::NUMBER(x + y))
@@ -169,33 +171,36 @@ mod tests {
         // assert_eq!(expr.evaluate().unwrap(),LiteralValue::BOOLEAN(true));
         let exprs = ["!0", "!1", "!true", "!false", "!nil"];
         let res = [true, false, false, true, true];
+        let mut env = crate::environment::Environment::new();
         for (i, expr) in exprs.iter().enumerate() {
             let mut scanner = Scanner::new(expr);
             let tokens = scanner.scan_tokens().unwrap();
             let parser = Parser::new(tokens);
             let expr = parser.parse_expression().unwrap();
-            assert_eq!(expr.evaluate().unwrap(), LiteralValue::BOOLEAN(res[i]));
+            assert_eq!(expr.evaluate(&env).unwrap(), LiteralValue::BOOLEAN(res[i]));
         }
     }
     #[test]
     fn test_unary2() {
         let expr = "!\"hello world\"";
+        let mut env = crate::environment::Environment::new();
         let mut scanner = Scanner::new(expr);
         let tokens = scanner.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
         let expr = parser.parse_expression().unwrap();
-        assert_eq!(expr.evaluate().unwrap(), LiteralValue::BOOLEAN(false));
+        assert_eq!(expr.evaluate(&env).unwrap(), LiteralValue::BOOLEAN(false));
     }
     #[test]
     fn test_unary3() {
         let exprs = ["1", "-1", "-0", "-1.1", "-0.1"];
         let res = [1.0, -1.0, 0.0, -1.1, -0.1];
+        let mut env = crate::environment::Environment::new();
         for (i, expr) in exprs.iter().enumerate() {
             let mut scanner = Scanner::new(expr);
             let tokens = scanner.scan_tokens().unwrap();
             let parser = Parser::new(tokens);
             let expr = parser.parse_expression().unwrap();
-            assert_eq!(expr.evaluate().unwrap(), LiteralValue::NUMBER(res[i]));
+            assert_eq!(expr.evaluate(&env).unwrap(), LiteralValue::NUMBER(res[i]));
         }
     }
 }

@@ -189,7 +189,7 @@ impl Parser {
                 self.advance();
                 let expr = self.expression()?;
                 self.consume(TokenType::RIGHT_PAREN, "expect ')' after expression")?;
-               Ok(Expr::Grouping(Box::from(expr)))
+                Ok(Expr::Grouping(Box::from(expr)))
             }
             TokenType::NUMBER
             | TokenType::STRING
@@ -204,7 +204,7 @@ impl Parser {
                 self.advance();
                 Ok(Expr::Variable(token.clone()))
             }
-            _ => Err(format!("expect expression, got {:?}", token.token_type))
+            _ => Err(format!("expect expression, got {:?}", token.token_type)),
         }
     }
     fn consume(&self, token_type: TokenType, message: &str) -> Result<Token, String> {
