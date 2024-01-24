@@ -412,6 +412,15 @@ impl LiteralValue {
             LiteralValue::STRING(s) => LiteralValue::BOOLEAN(!s.is_empty()),
         }
     }
+
+    pub fn is_truthy(&self) -> bool {
+        match self {
+            LiteralValue::NIL => false,
+            LiteralValue::BOOLEAN(b) => *b,
+            LiteralValue::NUMBER(n) => *n != 0.0f64,
+            LiteralValue::STRING(s) => !s.is_empty(),
+        }
+    }
 }
 
 // impl Copy for LiteralValue {

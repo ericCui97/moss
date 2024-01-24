@@ -56,8 +56,10 @@ impl Expr {
         match self {
             Expr::Assign { name, value } => {
                 let value = value.evaluate(env)?;
-                env.assign(name.lexeme.clone(), value)?;
-                Ok(LiteralValue::NIL)
+                match env.assign(name.lexeme.clone(), value) {
+                    Ok(v) => Ok(v),
+                    Err(e) => Err(e),
+                }
             }
             Expr::Variable(name) => match env.get(name.lexeme.clone()) {
                 Some(v) => Ok(v.clone()),

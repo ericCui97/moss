@@ -1,23 +1,15 @@
 use crate::scanner::LiteralValue;
 use std::collections::HashMap;
+use std::rc::Rc;
 
-#[derive(Default)]
+#[derive(Default,Clone)]
 pub struct Environment {
     map: HashMap<String, LiteralValue>,
-    enclosing: Option<Box<Environment>>,
+    pub enclosing: Option<Rc<Environment>>,
 }
-
 impl Environment {
-
     pub fn new() -> Self {
         Self::default()
-    }
-
-    pub fn new_enclosing(enclosing: Environment) -> Self {
-        Self {
-            map: HashMap::new(),
-            enclosing: Some(Box::new(enclosing)),
-        }
     }
 
     pub fn define(&mut self, name: String, value: LiteralValue) {
@@ -34,14 +26,17 @@ impl Environment {
         }
     }
 
-    pub fn assign(&mut self, name: String, value: LiteralValue) -> Result<(), String> {
+    pub fn assign(&mut self, name: String, value: LiteralValue) -> Result<LiteralValue, String> {
         match self.map.get_mut(&name) {
             Some(v) => {
+                let old = v.clone();
                 *v = value;
-                Ok(())
+                Ok(old)
             }
             None => match &mut self.enclosing {
-                Some(enclosing) => enclosing.assign(name, value),
+                Some(enclosing) => Rc::get_mut(&mut enclosing.clone()).expect(
+                    "cant get mut from Rc<Environment> in Environment::assign"
+                ).assign(name,value),
                 None => Err(format!("Undefined variable '{}'.", name)),
             },
         }
