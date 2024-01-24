@@ -185,7 +185,10 @@ mod tests {
             let tokens = scanner.scan_tokens().unwrap();
             let parser = Parser::new(tokens);
             let expr = parser.parse_expression().unwrap();
-            assert_eq!(expr.evaluate(&mut env).unwrap(), LiteralValue::BOOLEAN(res[i]));
+            assert_eq!(
+                expr.evaluate(&mut env).unwrap(),
+                LiteralValue::BOOLEAN(res[i])
+            );
         }
     }
     #[test]
@@ -196,7 +199,10 @@ mod tests {
         let tokens = scanner.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
         let expr = parser.parse_expression().unwrap();
-        assert_eq!(expr.evaluate(&mut env).unwrap(), LiteralValue::BOOLEAN(false));
+        assert_eq!(
+            expr.evaluate(&mut env).unwrap(),
+            LiteralValue::BOOLEAN(false)
+        );
     }
     #[test]
     fn test_unary3() {
@@ -208,7 +214,10 @@ mod tests {
             let tokens = scanner.scan_tokens().unwrap();
             let parser = Parser::new(tokens);
             let expr = parser.parse_expression().unwrap();
-            assert_eq!(expr.evaluate(&mut env).unwrap(), LiteralValue::NUMBER(res[i]));
+            assert_eq!(
+                expr.evaluate(&mut env).unwrap(),
+                LiteralValue::NUMBER(res[i])
+            );
         }
     }
 }

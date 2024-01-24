@@ -1,16 +1,18 @@
 use crate::scanner::LiteralValue;
 use std::collections::HashMap;
+
+#[derive(Default)]
 pub struct Environment {
     map: HashMap<String, LiteralValue>,
     enclosing: Option<Box<Environment>>,
 }
+
 impl Environment {
+
     pub fn new() -> Self {
-        Self {
-            map: HashMap::new(),
-            enclosing: None,
-        }
+        Self::default()
     }
+
     pub fn new_enclosing(enclosing: Environment) -> Self {
         Self {
             map: HashMap::new(),
