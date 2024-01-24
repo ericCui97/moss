@@ -1,4 +1,3 @@
-mod Environment;
 pub mod environment;
 pub mod expr;
 pub mod parser;
