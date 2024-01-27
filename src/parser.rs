@@ -77,9 +77,74 @@ impl Parser {
             self.if_statement()
         } else if self.match_token(&[TokenType::WHILE]) {
             self.while_statement()
+        } else if self.match_token(&[TokenType::FOR]) {
+            self.for_statement()
         } else {
             self.expression_statement()
         }
+    }
+
+    fn for_statement(&self) -> Result<Stmt, String> {
+        self.consume(TokenType::LEFT_PAREN, "expect '(' after for");
+        let mut initializer;
+        if self.match_token(&[TokenType::SEMICOLON]) {
+            initializer = None;
+        } else if self.match_token(&[TokenType::VAR]) {
+            initializer = Some(self.var_declaration()?);
+        } else {
+            initializer = Some(self.expression_statement()?);
+        }
+
+        let mut condition;
+        if !self.check(&TokenType::SEMICOLON) {
+            // expression 不会consume 分号
+            condition = Some(self.expression()?);
+        }else{
+            condition = None;
+        }
+
+        self.consume(TokenType::SEMICOLON, "expect ';' after loop condition");
+
+        let mut increment;
+        if !self.check(&TokenType::RIGHT_PAREN) {
+            increment = Some(self.expression()?);
+        }else{
+            increment = None;
+        }
+
+        self.consume(TokenType::RIGHT_PAREN, "expect ')' after for clauses");
+
+        let mut body = self.statement()?;
+        if let Some(incr) = increment {
+            body = Stmt::Block {
+                statements: vec![body, Stmt::Expression { expression: incr }],
+            };
+        }
+
+        match condition {
+            Some(c) => {
+                body = Stmt::WhileStmt {
+                    condition: c,
+                    body: Box::from(body),
+                };
+            }
+            None => {
+                body = Stmt::WhileStmt {
+                    condition: Expr::Literal(LiteralValue::BOOLEAN(true)),
+                    body: Box::from(body),
+                };
+            }
+        }
+
+
+        if let Some(init) = initializer {
+            body = Stmt::Block {
+                statements: vec![init, body],
+            };
+        }
+
+        Ok(body)
+
     }
 
     fn if_statement(&self) -> Result<Stmt, String> {
@@ -342,7 +407,7 @@ mod tests {
     }
     #[test]
     fn test_parser() {
-        let source = "1+2*3";
+        let source = "1+2*3;";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
@@ -353,7 +418,7 @@ mod tests {
 
     #[test]
     fn test_comparison() {
-        let source = "1+2*3>=4";
+        let source = "1+2*3>=4;";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
@@ -363,7 +428,7 @@ mod tests {
 
     #[test]
     fn test_addition() {
-        let source = "1+2";
+        let source = "1+2;";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
@@ -374,7 +439,7 @@ mod tests {
 
     #[test]
     fn test_simple_math_expr_parse_with_paren() {
-        let source = "(1+21)*2432";
+        let source = "(1+21)*2432;";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
@@ -385,7 +450,7 @@ mod tests {
 
     #[test]
     fn test_complex_expression() {
-        let source = "(1.2+2)*3.4>=4";
+        let source = "(1.2+2)*3.4>=4;";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
@@ -399,7 +464,7 @@ mod tests {
 
     #[test]
     fn test_simple_math_expr_parse2() {
-        let source = "1+2*3";
+        let source = "1+2*3;";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
@@ -410,7 +475,7 @@ mod tests {
 
     #[test]
     fn test_unary() {
-        let source = "-1";
+        let source = "-1;";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
         let parser = Parser::new(tokens);

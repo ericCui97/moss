@@ -21,6 +21,7 @@ cargo install
 - [x] var expression
 - [x] math compute
 - [x] assignment expression
+- [] i++ i-- ++i --i += -= *= /=
 - [] blank string parse
 - [] function expression
 - [] condition expression

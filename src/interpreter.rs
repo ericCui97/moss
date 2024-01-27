@@ -29,7 +29,7 @@ impl Interpreter {
             }
             Stmt::Print { expression } => {
                 let value = expression.evaluate(self.env.clone())?;
-                println!("print op: {}", value.to_string());
+                println!("{}", value.to_string());
             }
             Stmt::Var { name, initializer } => {
                 if initializer != Expr::Literal(LiteralValue::NIL) {
