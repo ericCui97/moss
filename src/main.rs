@@ -6,7 +6,6 @@ mod scanner;
 mod stmt;
 use crate::interpreter::Interpreter;
 use crate::scanner::Scanner;
-use environment::Environment;
 use parser::Parser;
 use std::{
     env, fs,

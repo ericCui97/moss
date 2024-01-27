@@ -122,7 +122,10 @@ impl Parser {
 
     fn expression_statement(&self) -> Result<Stmt, String> {
         let expr = self.expression()?;
-        self.consume(TokenType::SEMICOLON, "expect ';' after expression statement")?;
+        self.consume(
+            TokenType::SEMICOLON,
+            "expect ';' after expression statement",
+        )?;
         Ok(Stmt::Expression { expression: expr })
     }
 
@@ -231,7 +234,6 @@ impl Parser {
         while self.match_token(&[TokenType::MINUS, TokenType::PLUS]) {
             let op = self.previous();
             let rhs = self.factor()?;
-            println!("lhs:{:?} op: {:?}, rhs: {:?}", expr, op, rhs);
             expr = Expr::Binary(Box::from(expr), op.clone(), Box::from(rhs));
         }
         Ok(expr)
