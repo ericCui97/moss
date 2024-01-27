@@ -6,6 +6,7 @@ mod scanner;
 mod stmt;
 use crate::interpreter::Interpreter;
 use crate::scanner::Scanner;
+use environment::Environment;
 use parser::Parser;
 use std::{
     env, fs,
@@ -62,12 +63,12 @@ fn run_prompt() -> Result<(), std::io::Error> {
 }
 fn main() {
     let args = env::args().collect::<Vec<String>>();
-    match args.len() {
-        1 => run_prompt().unwrap(),
-        2 => run_file(&args[1]),
-        _ => {
+    match args.len().cmp(&2) {
+        std::cmp::Ordering::Greater => {
             println!("Usage: <filename>");
             exit(64);
         }
+        std::cmp::Ordering::Equal => run_file(&args[1]),
+        std::cmp::Ordering::Less => run_prompt().unwrap(),
     }
 }

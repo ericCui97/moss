@@ -22,7 +22,7 @@ impl Parser {
         let mut statements = vec![];
         let mut errs = vec![];
         while !self.is_at_end() {
-            let stmt = self.decaration();
+            let stmt = self.declaration();
             match stmt {
                 Ok(s) => statements.push(s),
                 Err(e) => errs.push(e),
@@ -34,8 +34,7 @@ impl Parser {
             Ok(statements)
         }
     }
-
-    pub fn decaration(&self) -> Result<Stmt, String> {
+    fn declaration(&self) -> Result<Stmt, String> {
         if self.match_token(&[TokenType::VAR]) {
             match self.var_declaration() {
                 Ok(stmt) => Ok(stmt),
@@ -49,11 +48,11 @@ impl Parser {
         }
     }
 
-    // pub fn synchronize(&self) {
-    //     todo!()
-    // }
+    pub fn synchronize(&self) {
+        todo!()
+    }
 
-    pub fn var_declaration(&self) -> Result<Stmt, String> {
+    fn var_declaration(&self) -> Result<Stmt, String> {
         // var name = expression;
         let name = self.consume(TokenType::IDENTIFIER, "expect variable name")?;
         let initializer = if self.match_token(&[TokenType::EQUAL]) {
@@ -69,17 +68,65 @@ impl Parser {
         Ok(Stmt::Var { name, initializer })
     }
 
-    pub fn statement(&self) -> Result<Stmt, String> {
+    fn statement(&self) -> Result<Stmt, String> {
         if self.match_token(&[TokenType::PRINT]) {
             self.print_statement()
-        } else {
+        } else if self.match_token(&[TokenType::LEFT_BRACE]) {
+            self.block_statement()
+        } else if self.match_token(&[TokenType::IF]) {
+            self.if_statement()
+        }else if self.match_token(&[TokenType::WHILE]) {
+            self.while_statement()
+        }
+        else {
             self.expression_statement()
         }
     }
 
+    fn if_statement(&self) -> Result<Stmt, String> {
+        self.consume(TokenType::LEFT_PAREN, "expect '(' after if")?;
+        let condition = self.expression()?;
+        self.consume(TokenType::RIGHT_PAREN, "expect ')' after if condition")?;
+        let then_branch = Box::from(self.statement()?);
+        let else_branch = if self.match_token(&[TokenType::ELSE]) {
+            Some(Box::from(self.statement()?))
+        } else {
+            None
+        };
+        Ok(Stmt::IfStmt {
+            condition,
+            then_branch,
+            else_branch,
+        })
+    }
+
+    fn block_statement(&self) -> Result<Stmt, String> {
+        let mut statements = vec![];
+        while !self.check(&TokenType::RIGHT_BRACE) && !self.is_at_end() {
+            let stmt = self.declaration();
+            match stmt {
+                Ok(s) => statements.push(s),
+                Err(e) => return Err(e),
+            }
+        }
+        self.consume(TokenType::RIGHT_BRACE, "expect '}' after block")?;
+        Ok(Stmt::Block { statements })
+    }
+
+    fn while_statement(&self) -> Result<Stmt, String> {
+        self.consume(TokenType::LEFT_PAREN, "expect '(' after while")?;
+        let condition = self.expression()?;
+        self.consume(TokenType::RIGHT_PAREN, "expect ')' after while condition")?;
+        let body = Box::from(self.statement()?);
+        Ok(Stmt::WhileStmt {
+            condition,
+            body,
+        })
+    }
+
     fn expression_statement(&self) -> Result<Stmt, String> {
         let expr = self.expression()?;
-        self.consume(TokenType::SEMICOLON, "expect ';' after expression")?;
+        //        self.consume(TokenType::SEMICOLON, "expect ';' after expression")?;
         Ok(Stmt::Expression { expression: expr })
     }
 
@@ -90,7 +137,48 @@ impl Parser {
     }
 
     fn expression(&self) -> Result<Expr, String> {
-        self.equality()
+        self.assignment()
+    }
+
+    fn assignment(&self) -> Result<Expr, String> {
+        let expr = self.or()?;
+        if self.match_token(&[TokenType::EQUAL]) {
+            let _equals = self.previous();
+            let value = self.assignment()?;
+            match expr {
+                Expr::Variable(name) => {
+                    return Ok(Expr::Assign {
+                        name,
+                        value: Box::from(value),
+                    })
+                }
+                _ => {
+                    return Err(format!("invalid assignment target {:?}", expr));
+                }
+            }
+        }
+        Ok(expr)
+    }
+
+    // logic operator or->and->equality(including unary)
+    fn or(&self) -> Result<Expr, String> {
+        let mut expr = self.and()?;
+        while self.match_token(&[TokenType::OR]) {
+            let op = self.previous();
+            let rhs = self.and()?;
+            expr = Expr::Logical(Box::new(expr), op.clone(), Box::new(rhs))
+        }
+        Ok(expr)
+    }
+
+    fn and(&self) -> Result<Expr, String> {
+        let mut expr = self.equality()?;
+        while self.match_token(&[TokenType::AND]) {
+            let op = self.previous();
+            let rhs = self.equality()?;
+            expr = Expr::Logical(Box::new(expr), op.clone(), Box::new(rhs))
+        }
+        Ok(expr)
     }
     #[cfg(test)]
     pub fn parse_expression(&self) -> Result<Expr, String> {
@@ -118,12 +206,10 @@ impl Parser {
     // -> primary( () primitive)
     fn equality(&self) -> Result<Expr, String> {
         let mut lhs = self.comparison()?;
-        if self.match_token(&[TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL]) {
-            loop {
-                let op = self.previous();
-                let rhs = self.comparison()?;
-                lhs = Expr::Binary(Box::from(lhs), op.clone(), Box::from(rhs));
-            }
+        while self.match_token(&[TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL]) {
+            let op = self.previous();
+            let rhs = self.comparison()?;
+            lhs = Expr::Binary(Box::from(lhs), op.clone(), Box::from(rhs));
         }
         Ok(lhs)
     }
@@ -174,22 +260,13 @@ impl Parser {
     }
 
     fn primary(&self) -> Result<Expr, String> {
-        // if self.match_token(&[TokenType::LEFT_PAREN]) {
-        //     let expr = self.expression()?;
-        //     self.consume(TokenType::RIGHT_PAREN, "expect ')' after expression")?;
-        //     Ok(Expr::Grouping(Box::from(expr)))
-        // } else {
-        //     let token = self.peek();
-        //     self.advance();
-        //     Ok(Expr::Literal(LiteralValue::from_token(token).unwrap()))
-        // }
         let token = self.peek();
         match token.token_type {
             TokenType::LEFT_PAREN => {
                 self.advance();
                 let expr = self.expression()?;
                 self.consume(TokenType::RIGHT_PAREN, "expect ')' after expression")?;
-               Ok(Expr::Grouping(Box::from(expr)))
+                Ok(Expr::Grouping(Box::from(expr)))
             }
             TokenType::NUMBER
             | TokenType::STRING
@@ -204,7 +281,7 @@ impl Parser {
                 self.advance();
                 Ok(Expr::Variable(token.clone()))
             }
-            _ => Err(format!("expect expression, got {:?}", token.token_type))
+            _ => Err(format!("expect expression, got {:?}", token.token_type)),
         }
     }
     fn consume(&self, token_type: TokenType, message: &str) -> Result<Token, String> {
@@ -266,7 +343,7 @@ mod tests {
     }
     #[test]
     fn test_parser() {
-        let source = "1+2*3;";
+        let source = "1+2*3";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
@@ -277,7 +354,7 @@ mod tests {
 
     #[test]
     fn test_comparison() {
-        let source = "1+2*3>=4;";
+        let source = "1+2*3>=4";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
@@ -287,7 +364,7 @@ mod tests {
 
     #[test]
     fn test_addition() {
-        let source = "1+2;";
+        let source = "1+2";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
@@ -298,12 +375,9 @@ mod tests {
 
     #[test]
     fn test_simple_math_expr_parse_with_paren() {
-        let source = "(1+21)*2432;";
+        let source = "(1+21)*2432";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
-        for token in &tokens {
-            println!("{:?}", token);
-        }
         let parser = Parser::new(tokens);
         let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
         //		println!("{:?}", expr.to_string());
@@ -312,7 +386,7 @@ mod tests {
 
     #[test]
     fn test_complex_expression() {
-        let source = "(1.2+2)*3.4>=4;";
+        let source = "(1.2+2)*3.4>=4";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
@@ -326,7 +400,7 @@ mod tests {
 
     #[test]
     fn test_simple_math_expr_parse2() {
-        let source = "1+2*3;";
+        let source = "1+2*3";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
@@ -337,7 +411,7 @@ mod tests {
 
     #[test]
     fn test_unary() {
-        let source = "-1;";
+        let source = "-1";
         let scan = &mut Scanner::new(source);
         let tokens = scan.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
