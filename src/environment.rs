@@ -2,7 +2,7 @@ use crate::scanner::LiteralValue;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-#[derive(Default,Clone)]
+#[derive(Default, Clone)]
 pub struct Environment {
     map: HashMap<String, LiteralValue>,
     pub enclosing: Option<Rc<Environment>>,
@@ -34,9 +34,9 @@ impl Environment {
                 Ok(old)
             }
             None => match &mut self.enclosing {
-                Some(enclosing) => Rc::get_mut(&mut enclosing.clone()).expect(
-                    "cant get mut from Rc<Environment> in Environment::assign"
-                ).assign(name,value),
+                Some(enclosing) => Rc::get_mut(&mut enclosing.clone())
+                    .expect("cant get mut from Rc<Environment> in Environment::assign")
+                    .assign(name, value),
                 None => Err(format!("Undefined variable '{}'.", name)),
             },
         }

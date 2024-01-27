@@ -58,11 +58,16 @@ impl Interpreter {
                 then_branch,
                 else_branch,
             } => {
-               let condition = condition.evaluate(self.get_mut_env())?;
+                let condition = condition.evaluate(self.get_mut_env())?;
                 if condition.is_truthy() {
-                     self.interpret_stmt(*then_branch)?;
+                    self.interpret_stmt(*then_branch)?;
                 } else if let Some(else_branch) = else_branch {
-                     self.interpret_stmt(*else_branch)?;
+                    self.interpret_stmt(*else_branch)?;
+                }
+            }
+            Stmt::WhileStmt { condition, body } => {
+                while condition.evaluate(self.get_mut_env())?.is_truthy() {
+                    self.interpret_stmt(*body.clone())?;
                 }
             }
         }

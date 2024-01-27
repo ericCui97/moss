@@ -48,9 +48,9 @@ impl Parser {
         }
     }
 
-    // pub fn synchronize(&self) {
-    //     todo!()
-    // }
+    pub fn synchronize(&self) {
+        todo!()
+    }
 
     fn var_declaration(&self) -> Result<Stmt, String> {
         // var name = expression;
@@ -73,8 +73,10 @@ impl Parser {
             self.print_statement()
         } else if self.match_token(&[TokenType::LEFT_BRACE]) {
             self.block_statement()
-        }else if self.match_token(&[TokenType::IF]) {
+        } else if self.match_token(&[TokenType::IF]) {
             self.if_statement()
+        }else if self.match_token(&[TokenType::WHILE]) {
+            self.while_statement()
         }
         else {
             self.expression_statement()
@@ -83,9 +85,7 @@ impl Parser {
 
     fn if_statement(&self) -> Result<Stmt, String> {
         self.consume(TokenType::LEFT_PAREN, "expect '(' after if")?;
-        dbg!("1");
         let condition = self.expression()?;
-        dbg!("2");
         self.consume(TokenType::RIGHT_PAREN, "expect ')' after if condition")?;
         let then_branch = Box::from(self.statement()?);
         let else_branch = if self.match_token(&[TokenType::ELSE]) {
@@ -100,8 +100,6 @@ impl Parser {
         })
     }
 
-
-
     fn block_statement(&self) -> Result<Stmt, String> {
         let mut statements = vec![];
         while !self.check(&TokenType::RIGHT_BRACE) && !self.is_at_end() {
@@ -115,9 +113,20 @@ impl Parser {
         Ok(Stmt::Block { statements })
     }
 
+    fn while_statement(&self) -> Result<Stmt, String> {
+        self.consume(TokenType::LEFT_PAREN, "expect '(' after while")?;
+        let condition = self.expression()?;
+        self.consume(TokenType::RIGHT_PAREN, "expect ')' after while condition")?;
+        let body = Box::from(self.statement()?);
+        Ok(Stmt::WhileStmt {
+            condition,
+            body,
+        })
+    }
+
     fn expression_statement(&self) -> Result<Stmt, String> {
         let expr = self.expression()?;
-//        self.consume(TokenType::SEMICOLON, "expect ';' after expression")?;
+        //        self.consume(TokenType::SEMICOLON, "expect ';' after expression")?;
         Ok(Stmt::Expression { expression: expr })
     }
 
@@ -132,7 +141,7 @@ impl Parser {
     }
 
     fn assignment(&self) -> Result<Expr, String> {
-        let expr = self.equality()?;
+        let expr = self.or()?;
         if self.match_token(&[TokenType::EQUAL]) {
             let _equals = self.previous();
             let value = self.assignment()?;
@@ -147,6 +156,27 @@ impl Parser {
                     return Err(format!("invalid assignment target {:?}", expr));
                 }
             }
+        }
+        Ok(expr)
+    }
+
+    // logic operator or->and->equality(including unary)
+    fn or(&self) -> Result<Expr, String> {
+        let mut expr = self.and()?;
+        while self.match_token(&[TokenType::OR]) {
+            let op = self.previous();
+            let rhs = self.and()?;
+            expr = Expr::Logical(Box::new(expr), op.clone(), Box::new(rhs))
+        }
+        Ok(expr)
+    }
+
+    fn and(&self) -> Result<Expr, String> {
+        let mut expr = self.equality()?;
+        while self.match_token(&[TokenType::AND]) {
+            let op = self.previous();
+            let rhs = self.equality()?;
+            expr = Expr::Logical(Box::new(expr), op.clone(), Box::new(rhs))
         }
         Ok(expr)
     }
@@ -176,12 +206,10 @@ impl Parser {
     // -> primary( () primitive)
     fn equality(&self) -> Result<Expr, String> {
         let mut lhs = self.comparison()?;
-        if self.match_token(&[TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL]) {
-            loop {
-                let op = self.previous();
-                let rhs = self.comparison()?;
-                lhs = Expr::Binary(Box::from(lhs), op.clone(), Box::from(rhs));
-            }
+        while self.match_token(&[TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL]) {
+            let op = self.previous();
+            let rhs = self.comparison()?;
+            lhs = Expr::Binary(Box::from(lhs), op.clone(), Box::from(rhs));
         }
         Ok(lhs)
     }
@@ -232,15 +260,6 @@ impl Parser {
     }
 
     fn primary(&self) -> Result<Expr, String> {
-        // if self.match_token(&[TokenType::LEFT_PAREN]) {
-        //     let expr = self.expression()?;
-        //     self.consume(TokenType::RIGHT_PAREN, "expect ')' after expression")?;
-        //     Ok(Expr::Grouping(Box::from(expr)))
-        // } else {
-        //     let token = self.peek();
-        //     self.advance();
-        //     Ok(Expr::Literal(LiteralValue::from_token(token).unwrap()))
-        // }
         let token = self.peek();
         match token.token_type {
             TokenType::LEFT_PAREN => {

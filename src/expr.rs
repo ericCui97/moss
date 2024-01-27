@@ -15,6 +15,8 @@ pub enum Expr {
     Variable(Token),
 
     Assign { name: Token, value: Box<Expr> },
+
+    Logical(Box<Expr>, Token, Box<Expr>),
 }
 impl Expr {
     #[allow(clippy::inherent_to_string)]
@@ -48,12 +50,44 @@ impl Expr {
             Expr::Assign { name, value } => {
                 format!("A({} {})", name.lexeme, value.to_string())
             }
+            Expr::Logical(left, op, right) => {
+                format!(
+                    "Logical({} {} {})",
+                    left.to_string(),
+                    op.lexeme,
+                    right.to_string()
+                )
+            }
         }
     }
 
     // 执行表达式
     pub fn evaluate(&self, env: &mut Environment) -> Result<LiteralValue, String> {
         match self {
+            Expr::Logical(left, op, right) => {
+                let left_value = left.evaluate(env)?;
+                let left_true = left_value.is_truthy();
+                match op.token_type {
+                    TokenType::OR => {
+                        if left_true {
+                            Ok(left_value)
+                        } else {
+                            right.evaluate(env)
+                        }
+                    }
+                    TokenType::AND => {
+                        if !left_true {
+                            Ok(LiteralValue::BOOLEAN(false))
+                        } else {
+                            right.evaluate(env)
+                        }
+                    }
+                    _ => Err(format!(
+                        "logical operator {:?} not supported",
+                        op.token_type
+                    )),
+                }
+            }
             Expr::Assign { name, value } => {
                 let value = value.evaluate(env)?;
                 match env.assign(name.lexeme.clone(), value) {
@@ -63,8 +97,13 @@ impl Expr {
             }
             Expr::Variable(name) => match env.get(name.lexeme.clone()) {
                 Some(v) => Ok(v.clone()),
-                None => Err(format!("variable {} not found", name.lexeme)),
+                //                None => Err(format!("variable {} not found", name.lexeme)),
+                None => {
+                    println!("variable {} not found", name.lexeme);
+                    Ok(LiteralValue::NIL)
+                }
             },
+
             Expr::Literal(lit) => Ok(lit.clone()),
             Expr::Grouping(e) => e.evaluate(env),
             Expr::Unary(op, right) => {

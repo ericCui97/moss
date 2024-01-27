@@ -1,14 +1,28 @@
 use crate::{expr::Expr, scanner::Token};
+#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Clone)]
 pub enum Stmt {
-    Expression { expression: Expr },
-    Print { expression: Expr },
-    Var { name: Token, initializer: Expr },
-    Block { statements: Vec<Stmt> },
+    Expression {
+        expression: Expr,
+    },
+    Print {
+        expression: Expr,
+    },
+    Var {
+        name: Token,
+        initializer: Expr,
+    },
     IfStmt {
         condition: Expr,
         then_branch: Box<Stmt>,
         else_branch: Option<Box<Stmt>>,
+    },
+    Block {
+        statements: Vec<Stmt>,
+    },
+    WhileStmt {
+        condition: Expr,
+        body: Box<Stmt>,
     },
 
 }
@@ -17,6 +31,9 @@ impl Stmt {
     #[allow(dead_code)]
     pub fn to_string(&self) -> String {
         match self {
+            Stmt::WhileStmt { condition, body } => {
+                format!("While({} {})", condition.to_string(), body.to_string())
+            }
             Stmt::Expression { expression } => {
                 format!("E({})", expression.to_string())
             }
