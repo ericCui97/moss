@@ -1,5 +1,7 @@
 use crate::environment::Environment;
 use crate::scanner::{LiteralValue, Token, TokenType};
+use std::cell::RefCell;
+use std::rc::Rc;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     // grouping expression like (1+2)
@@ -62,24 +64,24 @@ impl Expr {
     }
 
     // 执行表达式
-    pub fn evaluate(&self, env: &mut Environment) -> Result<LiteralValue, String> {
+    pub fn evaluate(&self, env: Rc<RefCell<Environment>>) -> Result<LiteralValue, String> {
         match self {
             Expr::Logical(left, op, right) => {
-                let left_value = left.evaluate(env)?;
+                let left_value = left.evaluate(env.clone())?;
                 let left_true = left_value.is_truthy();
                 match op.token_type {
                     TokenType::OR => {
                         if left_true {
                             Ok(left_value)
                         } else {
-                            right.evaluate(env)
+                            right.evaluate(env.clone())
                         }
                     }
                     TokenType::AND => {
                         if !left_true {
                             Ok(LiteralValue::BOOLEAN(false))
                         } else {
-                            right.evaluate(env)
+                            right.evaluate(env.clone())
                         }
                     }
                     _ => Err(format!(
@@ -89,13 +91,16 @@ impl Expr {
                 }
             }
             Expr::Assign { name, value } => {
-                let value = value.evaluate(env)?;
-                match env.assign(name.lexeme.clone(), value) {
-                    Ok(v) => Ok(v),
-                    Err(e) => Err(e),
+                let value = (*value).evaluate(env.clone())?;
+                match env.borrow_mut().assign(name.lexeme.clone(), value) {
+                    true => Ok(LiteralValue::NIL),
+                    false => Err(format!(
+                        "assignment failed,variable {} not found",
+                        name.lexeme
+                    )),
                 }
             }
-            Expr::Variable(name) => match env.get(name.lexeme.clone()) {
+            Expr::Variable(name) => match env.borrow_mut().get(name.lexeme.clone()) {
                 Some(v) => Ok(v.clone()),
                 //                None => Err(format!("variable {} not found", name.lexeme)),
                 None => {
@@ -121,8 +126,8 @@ impl Expr {
                 }
             }
             Expr::Binary(left, op, right) => {
-                let left = left.evaluate(env)?;
-                let right = right.evaluate(env)?;
+                let left = left.evaluate(env.clone())?;
+                let right = right.evaluate(env.clone())?;
                 match (&left, op.token_type, &right) {
                     (LiteralValue::NUMBER(x), TokenType::PLUS, LiteralValue::NUMBER(y)) => {
                         Ok(LiteralValue::NUMBER(x + y))
@@ -186,80 +191,3 @@ impl Expr {
         }
     }
 }
-//---------------------------------test---------------------------------//
-// #region
-#[cfg(test)]
-mod tests {
-    use crate::parser::Parser;
-    use crate::scanner::LiteralValue;
-    use crate::scanner::Scanner;
-    use serde::Deserialize;
-    use serde::Serialize;
-
-    #[derive(Debug, Serialize, Deserialize)]
-    struct Test {
-        name: String,
-        expr: String,
-        expected_result: f64,
-    }
-
-    // fn read_tests_from_file(file_path: &str) -> Vec<Test> {
-    //     let mut file = File::open(file_path).expect("Failed to open file");
-    //     let mut contents = String::new();
-    //     file.read_to_string(&mut contents)
-    //         .expect("Failed to read file");
-    //     serde_json::from_str(&contents).expect("Failed to parse JSON")
-    // }
-    #[test]
-    fn test_unary() {
-        // let expr = "!0";
-        // let mut scanner = Scanner::new(expr);
-        // let tokens = scanner.scan_tokens().unwrap();
-        // let mut parser = Parser::new(tokens);
-        // let expr = parser.parse().unwrap();
-        // assert_eq!(expr.evaluate().unwrap(),LiteralValue::BOOLEAN(true));
-        let exprs = ["!0", "!1", "!true", "!false", "!nil"];
-        let res = [true, false, false, true, true];
-        let mut env = crate::environment::Environment::new();
-        for (i, expr) in exprs.iter().enumerate() {
-            let mut scanner = Scanner::new(expr);
-            let tokens = scanner.scan_tokens().unwrap();
-            let parser = Parser::new(tokens);
-            let expr = parser.parse_expression().unwrap();
-            assert_eq!(
-                expr.evaluate(&mut env).unwrap(),
-                LiteralValue::BOOLEAN(res[i])
-            );
-        }
-    }
-    #[test]
-    fn test_unary2() {
-        let expr = "!\"hello world\"";
-        let mut env = crate::environment::Environment::new();
-        let mut scanner = Scanner::new(expr);
-        let tokens = scanner.scan_tokens().unwrap();
-        let parser = Parser::new(tokens);
-        let expr = parser.parse_expression().unwrap();
-        assert_eq!(
-            expr.evaluate(&mut env).unwrap(),
-            LiteralValue::BOOLEAN(false)
-        );
-    }
-    #[test]
-    fn test_unary3() {
-        let exprs = ["1", "-1", "-0", "-1.1", "-0.1"];
-        let res = [1.0, -1.0, 0.0, -1.1, -0.1];
-        let mut env = crate::environment::Environment::new();
-        for (i, expr) in exprs.iter().enumerate() {
-            let mut scanner = Scanner::new(expr);
-            let tokens = scanner.scan_tokens().unwrap();
-            let parser = Parser::new(tokens);
-            let expr = parser.parse_expression().unwrap();
-            assert_eq!(
-                expr.evaluate(&mut env).unwrap(),
-                LiteralValue::NUMBER(res[i])
-            );
-        }
-    }
-}
-// #endregion

@@ -32,5 +32,10 @@ cargo install
 
 - [] use nom refact lexer
 
+### test-cases
+```bash
+cargo run ./test_file/test_while.moss
+```
+
 
 
