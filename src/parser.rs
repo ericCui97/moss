@@ -75,10 +75,9 @@ impl Parser {
             self.block_statement()
         } else if self.match_token(&[TokenType::IF]) {
             self.if_statement()
-        }else if self.match_token(&[TokenType::WHILE]) {
+        } else if self.match_token(&[TokenType::WHILE]) {
             self.while_statement()
-        }
-        else {
+        } else {
             self.expression_statement()
         }
     }
@@ -118,15 +117,12 @@ impl Parser {
         let condition = self.expression()?;
         self.consume(TokenType::RIGHT_PAREN, "expect ')' after while condition")?;
         let body = Box::from(self.statement()?);
-        Ok(Stmt::WhileStmt {
-            condition,
-            body,
-        })
+        Ok(Stmt::WhileStmt { condition, body })
     }
 
     fn expression_statement(&self) -> Result<Stmt, String> {
         let expr = self.expression()?;
-        //        self.consume(TokenType::SEMICOLON, "expect ';' after expression")?;
+        self.consume(TokenType::SEMICOLON, "expect ';' after expression statement")?;
         Ok(Stmt::Expression { expression: expr })
     }
 
@@ -235,6 +231,7 @@ impl Parser {
         while self.match_token(&[TokenType::MINUS, TokenType::PLUS]) {
             let op = self.previous();
             let rhs = self.factor()?;
+            println!("lhs:{:?} op: {:?}, rhs: {:?}", expr, op, rhs);
             expr = Expr::Binary(Box::from(expr), op.clone(), Box::from(rhs));
         }
         Ok(expr)
