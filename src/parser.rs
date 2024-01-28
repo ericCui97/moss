@@ -99,7 +99,7 @@ impl Parser {
         if !self.check(&TokenType::SEMICOLON) {
             // expression 不会consume 分号
             condition = Some(self.expression()?);
-        }else{
+        } else {
             condition = None;
         }
 
@@ -108,11 +108,11 @@ impl Parser {
         let mut increment;
         if !self.check(&TokenType::RIGHT_PAREN) {
             increment = Some(self.expression()?);
-        }else{
+        } else {
             increment = None;
         }
 
-        self.consume(TokenType::RIGHT_PAREN, "expect ')' after for clauses");
+        self.consume(TokenType::RIGHT_PAREN, "expect ')' after for clauses")?;
 
         let mut body = self.statement()?;
         if let Some(incr) = increment {
@@ -136,7 +136,6 @@ impl Parser {
             }
         }
 
-
         if let Some(init) = initializer {
             body = Stmt::Block {
                 statements: vec![init, body],
@@ -144,7 +143,6 @@ impl Parser {
         }
 
         Ok(body)
-
     }
 
     fn if_statement(&self) -> Result<Stmt, String> {

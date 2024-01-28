@@ -25,14 +25,14 @@ pub enum Stmt {
         body: Box<Stmt>,
     },
     //     for(initializer;condition;incrementer) body
-//    ForStmt {
-////        initializer: Option<Box<Stmt>>,
-//        var_decl: Option<Box<Stmt>>,
-//        expr_stmt: Option<Box<Stmt>>,
-//        condition: Option<Expr>,
-//        incrementer: Option<Expr>,
-//        body: Box<Stmt>,
-//    },
+    //    ForStmt {
+    ////        initializer: Option<Box<Stmt>>,
+    //        var_decl: Option<Box<Stmt>>,
+    //        expr_stmt: Option<Box<Stmt>>,
+    //        condition: Option<Expr>,
+    //        incrementer: Option<Expr>,
+    //        body: Box<Stmt>,
+    //    },
 }
 impl Stmt {
     #[allow(clippy::inherent_to_string)]
