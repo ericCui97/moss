@@ -3,15 +3,33 @@ use crate::stmt::Stmt;
 use crate::{expr::Expr, scanner::LiteralValue};
 use std::cell::RefCell;
 use std::rc::Rc;
-
+use std::time::SystemTime;
 pub struct Interpreter {
     env: Rc<RefCell<Environment>>,
 }
 
+fn clock_impl(_args: &Vec<LiteralValue>) -> LiteralValue {
+    let now = std::time::SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .expect("111")
+        .as_millis();
+    LiteralValue::NUMBER((now as f64) / 1000.0)
+}
+
 impl Interpreter {
     pub fn new() -> Self {
+        let mut global = Environment::new();
+        global.define(
+            String::from("clock"),
+            LiteralValue::Callable {
+                name: "clock".to_string(),
+                arity: 0,
+                func: Rc::new(clock_impl),
+            },
+        );
+
         Self {
-            env: Rc::new(RefCell::new(Environment::new())),
+            env: Rc::new(RefCell::new(global)),
         }
     }
 
@@ -24,6 +42,9 @@ impl Interpreter {
 
     fn interpret_stmt(&mut self, stmt: Stmt) -> Result<(), String> {
         match stmt {
+            Stmt::Function { name, params, body } => {
+                todo!()
+            }
             Stmt::Expression { expression } => {
                 expression.evaluate(self.env.clone())?;
             }
@@ -32,12 +53,21 @@ impl Interpreter {
                 println!("{}", value.to_string());
             }
             Stmt::Var { name, initializer } => {
-                if initializer != Expr::Literal(LiteralValue::NIL) {
-                    let value = initializer.evaluate(self.env.clone())?;
-                    self.env.borrow_mut().define(name.lexeme, value);
-                } else {
-                    self.env.borrow_mut().define(name.lexeme, LiteralValue::NIL);
+                match initializer {
+                    Expr::Literal(LiteralValue::NIL) => {
+                        self.env.borrow_mut().define(name.lexeme, LiteralValue::NIL);
+                    }
+                    _ => {
+                        let value = initializer.evaluate(self.env.clone())?;
+                        self.env.borrow_mut().define(name.lexeme, value);
+                    }
                 }
+                // if initializer != Expr::Literal(LiteralValue::NIL) {
+                //     let value = initializer.evaluate(self.env.clone())?;
+                //     self.env.borrow_mut().define(name.lexeme, value);
+                // } else {
+                //     self.env.borrow_mut().define(name.lexeme, LiteralValue::NIL);
+                // }
             }
             Stmt::Block { statements } => {
                 let mut new_env = Environment::new();

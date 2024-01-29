@@ -3,12 +3,19 @@ use crate::{
     expr::Expr,
     scanner::{LiteralValue, Token, TokenType},
 };
+use core::panic;
 use std::cell::RefCell;
+use std::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Parser {
     tokens: Vec<Token>,
     current: RefCell<usize>,
+}
+
+enum FuncType {
+    Funciton,
+    Method,
 }
 
 impl Parser {
@@ -36,16 +43,43 @@ impl Parser {
     }
     fn declaration(&self) -> Result<Stmt, String> {
         if self.match_token(&[TokenType::VAR]) {
-            match self.var_declaration() {
-                Ok(stmt) => Ok(stmt),
-                Err(e) => {
-                    // self.synchronize();
-                    Err(e)
-                }
-            }
+            self.var_declaration()
+        } else if self.match_token(&[TokenType::FUN]) {
+            self.function(&FuncType::Funciton)
         } else {
             self.statement()
         }
+    }
+
+    fn function(&self, funcType: &FuncType) -> Result<Stmt, String> {
+        let name = self.consume(
+            TokenType::IDENTIFIER,
+            "fun declaration should follow before identifier/n",
+        )?;
+        self.consume(TokenType::LEFT_PAREN, "expect '(' after function name")?;
+        let mut params = vec![];
+        if !self.check(&TokenType::RIGHT_PAREN) {
+            loop {
+                if params.len() >= 255 {
+                    return Err("can't have more than 255 parameters".to_string());
+                }
+                params.push(self.consume(TokenType::IDENTIFIER, "expect parameter name")?);
+                if !self.match_token(&[TokenType::COMMA]) {
+                    break;
+                }
+            }
+        }
+        self.consume(TokenType::RIGHT_PAREN, "expect ')' after parameters")?;
+        self.consume(TokenType::LEFT_BRACE, "expect '{' before function body")?;
+        let body = match self.block_statement() {
+            Ok(s) => s,
+            Err(e) => panic!("function body parse error:{}", e),
+        };
+        Ok(Stmt::Function {
+            name,
+            params,
+            body: Box::from(body),
+        })
     }
 
     pub fn synchronize(&self) {
@@ -303,22 +337,57 @@ impl Parser {
     }
     // handle * /
     fn factor(&self) -> Result<Expr, String> {
-        let mut expr = self.unary();
+        let mut expr = self.unary()?;
         while self.match_token(&[TokenType::SLASH, TokenType::STAR]) {
             let op = self.previous();
-            let rhs = self.unary();
+            let rhs = self.unary()?;
             expr = Expr::Binary(Box::from(expr), op.clone(), Box::from(rhs));
         }
         Ok(expr)
     }
     // handle ! - 单目运算符
-    fn unary(&self) -> Expr {
+    fn unary(&self) -> Result<Expr, String> {
         if self.match_token(&[TokenType::BANG, TokenType::MINUS]) {
             let op = self.previous();
-            let rhs = self.unary();
-            return Expr::Unary(op.clone(), Box::from(rhs));
+            let rhs = self.unary()?;
+            return Ok(Expr::Unary(op.clone(), Box::from(rhs)));
         }
-        self.primary().unwrap()
+        // self.primary().unwrap()
+
+        self.call()
+    }
+
+    fn call(&self) -> Result<Expr, String> {
+        let mut expr = self.primary().unwrap();
+        loop {
+            if self.match_token(&[TokenType::LEFT_PAREN]) {
+                expr = self.finish_call(expr).unwrap();
+            } else {
+                break;
+            }
+        }
+        Ok(expr)
+    }
+
+    fn finish_call(&self, callee: Expr) -> Result<Expr, String> {
+        let mut arguments = vec![];
+        if !self.check(&TokenType::RIGHT_PAREN) {
+            loop {
+                if arguments.len() >= 255 {
+                    return Err("can't have more than 255 arguments".to_string());
+                }
+                arguments.push(self.expression()?);
+                if !self.match_token(&[TokenType::COMMA]) {
+                    break;
+                }
+            }
+        }
+        let paren = self.consume(TokenType::RIGHT_PAREN, "expect ')' after arguments")?;
+        Ok(Expr::Call {
+            callee: Box::from(callee),
+            paren,
+            arguments,
+        })
     }
 
     fn primary(&self) -> Result<Expr, String> {
@@ -398,7 +467,7 @@ mod tests {
         for stmt in stmts {
             match stmt {
                 Stmt::Expression { expression } => expr = expression,
-                _ => panic!("no expression contains in stmts"),
+                _ => todo!(),
             }
         }
         expr
