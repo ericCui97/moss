@@ -13,6 +13,26 @@ just for curiosity.
 cargo install
 ```
 
+### have a try
+
+if you want a repl to try moss, you can use `cargo run` to run moss.
+
+```bash
+cargo run
+```
+
+if you want to run a moss file, you can use `cargo run` to run moss.
+
+```bash
+cargo run ./test_file/test_while.moss
+```
+
+run test,both unit test and integration test.
+
+``` bash
+cargo test
+```
+
 ## todo
 
 ### feature
@@ -22,21 +42,17 @@ cargo install
 - [x] math compute
 - [x] assignment expression
 - [] i++ i-- ++i --i += -= *= /=
-- [] blank string parse
-- [] function expression
-- [] condition expression
-- [] loop expression
-- [] array expression
-- [] object expression
+- [x] if expression
+- [x] while expression
+- [x] function call expression
+- [x] function define expression
+- [ ] array expression
+- [ ] object expression
+
+### bug
+
+- [ ] blank string parse
 
 ### refact
 
-- [] use nom refact lexer
-
-### test-cases
-```bash
-cargo run ./test_file/test_while.moss
-```
-
-
-
+- [ ] use nom refact lexer
