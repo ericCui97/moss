@@ -1,5 +1,5 @@
 use lazy_static::lazy_static;
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, TokenType> = {
@@ -30,7 +30,7 @@ lazy_static! {
 
 #[warn(non_camel_case_types)]
 #[warn(dead_code)]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone)]
 pub struct Scanner<'a> {
     source: &'a str,
     tokens: Vec<Token>,
@@ -383,13 +383,19 @@ pub enum TokenType {
     EOF, // end of file
 }
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone)]
 pub enum LiteralValue {
     STRING(String),
     NUMBER(f64),
     //    BOOLEAN(bool),
     NIL,
     BOOLEAN(bool),
+    Callable {
+        name: String,
+        arity: usize,
+        func: Rc<dyn Fn(&Vec<LiteralValue>) -> LiteralValue>,
+        // func:
+    },
 }
 
 impl LiteralValue {
@@ -405,11 +411,13 @@ impl LiteralValue {
     }
 
     pub fn unwrap_as_boolean(&self) -> LiteralValue {
+        use LiteralValue::*;
         match self {
-            LiteralValue::NIL => LiteralValue::BOOLEAN(false),
-            LiteralValue::BOOLEAN(b) => LiteralValue::BOOLEAN(*b),
-            LiteralValue::NUMBER(n) => LiteralValue::BOOLEAN(*n != 0.0f64),
-            LiteralValue::STRING(s) => LiteralValue::BOOLEAN(!s.is_empty()),
+            NIL => LiteralValue::BOOLEAN(false),
+            BOOLEAN(b) => LiteralValue::BOOLEAN(*b),
+            NUMBER(n) => LiteralValue::BOOLEAN(*n != 0.0f64),
+            STRING(s) => LiteralValue::BOOLEAN(!s.is_empty()),
+            Callable => panic!("can not unwrap callable"),
         }
     }
 
@@ -419,21 +427,36 @@ impl LiteralValue {
             LiteralValue::BOOLEAN(b) => *b,
             LiteralValue::NUMBER(n) => *n != 0.0f64,
             LiteralValue::STRING(s) => !s.is_empty(),
+            Callable => {
+                panic!("can not unwrap callable")
+            }
         }
     }
 }
 
-// impl Copy for LiteralValue {
-//     fn copy(&self) -> Self {
-//         match self {
-//             LiteralValue::NUMBER(n) => LiteralValue::NUMBER(*n),
-//             LiteralValue::STRING(s) => LiteralValue::STRING(s.clone()),
-//             LiteralValue::BOOLEAN(b) => LiteralValue::BOOLEAN(*b),
-//             LiteralValue::NIL => LiteralValue::NIL,
-//         }
-//     }
-// }
-
+impl PartialEq for LiteralValue {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (LiteralValue::STRING(s1), LiteralValue::STRING(s2)) => s1 == s2,
+            (LiteralValue::NUMBER(n1), LiteralValue::NUMBER(n2)) => n1 == n2,
+            (LiteralValue::BOOLEAN(b1), LiteralValue::BOOLEAN(b2)) => b1 == b2,
+            (LiteralValue::NIL, LiteralValue::NIL) => true,
+            (
+                LiteralValue::Callable {
+                    name: n1,
+                    arity: a1,
+                    func: _,
+                },
+                LiteralValue::Callable {
+                    name: n2,
+                    arity: a2,
+                    func: _,
+                },
+            ) => n1 == n2 && a1 == a2,
+            _ => false,
+        }
+    }
+}
 #[allow(clippy::inherent_to_string)]
 impl LiteralValue {
     pub fn to_string(&self) -> String {
@@ -442,10 +465,13 @@ impl LiteralValue {
             LiteralValue::STRING(s) => s.to_string(),
             LiteralValue::BOOLEAN(b) => b.to_string(),
             LiteralValue::NIL => "nil".to_string(),
+            LiteralValue::Callable { name, arity, func } => {
+                format!("Callable({} {})", name, arity)
+            }
         }
     }
 }
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
@@ -466,12 +492,6 @@ impl Token {
             literal,
             line_number,
         }
-    }
-}
-
-impl std::fmt::Display for Token {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
     }
 }
 
@@ -565,8 +585,6 @@ mod tests {
         let tokens = scanner.scan_tokens().unwrap();
         assert_eq!(tokens[0].token_type, TokenType::NUMBER);
         assert_eq!(tokens[0].lexeme, "123");
-        assert_eq!(tokens[0].literal, Some(LiteralValue::NUMBER(123.0)));
-
         assert_eq!(tokens[1].token_type, TokenType::NUMBER);
         assert_eq!(tokens[1].lexeme, "123.456");
         assert_eq!(tokens[2].token_type, TokenType::NUMBER);

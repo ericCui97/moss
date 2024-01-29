@@ -2,7 +2,7 @@ use crate::environment::Environment;
 use crate::scanner::{LiteralValue, Token, TokenType};
 use std::cell::RefCell;
 use std::rc::Rc;
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone)]
 pub enum Expr {
     // grouping expression like (1+2)
     Grouping(Box<Expr>),
@@ -16,9 +16,23 @@ pub enum Expr {
     // variable expression like var a = 1
     Variable(Token),
 
-    Assign { name: Token, value: Box<Expr> },
+    Assign {
+        name: Token,
+        value: Box<Expr>,
+    },
 
     Logical(Box<Expr>, Token, Box<Expr>),
+
+    Call {
+        callee: Box<Expr>,
+        paren: Token,
+        arguments: Vec<Expr>,
+    },
+}
+impl std::fmt::Debug for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.to_string())
+    }
 }
 impl Expr {
     #[allow(clippy::inherent_to_string)]
@@ -59,6 +73,20 @@ impl Expr {
                     op.lexeme,
                     right.to_string()
                 )
+            }
+            Expr::Call {
+                callee,
+                paren,
+                arguments,
+            } => {
+                let mut s = String::from("Call(");
+                s.push_str(&callee.to_string());
+                s.push_str(&paren.lexeme);
+                for arg in arguments {
+                    s.push_str(&arg.to_string());
+                }
+                s.push(')');
+                s
             }
         }
     }
@@ -108,7 +136,6 @@ impl Expr {
                     Ok(LiteralValue::NIL)
                 }
             },
-
             Expr::Literal(lit) => Ok(lit.clone()),
             Expr::Grouping(e) => e.evaluate(env),
             Expr::Unary(op, right) => {
@@ -123,6 +150,31 @@ impl Expr {
                         _ => Err("unary ! can only apply to boolean".to_string()),
                     },
                     _ => Err(format!("unary operator {:?} not supported", op.token_type)),
+                }
+            }
+            Expr::Call {
+                callee,
+                paren,
+                arguments,
+            } => {
+                let callable = (*callee).evaluate(env.clone())?;
+                match callable {
+                    LiteralValue::Callable { name, arity, func } => {
+                        if arguments.len() != arity {
+                            return Err(format!(
+                                "function {} expect {} arguments, but got {}",
+                                name,
+                                arity,
+                                arguments.len()
+                            ));
+                        }
+                        let mut args = vec![];
+                        for arg in arguments {
+                            args.push(arg.evaluate(env.clone())?);
+                        }
+                        Ok(func(&args))
+                    }
+                    other => Err(format!("{} is not callable", other.to_string())),
                 }
             }
             Expr::Binary(left, op, right) => {

@@ -20,7 +20,7 @@ fn run(interpreter: &mut Interpreter, source: &str) -> Result<(), String> {
     interpreter.interpret(&stmts)?;
     Ok(())
 }
-fn run_file(path: &str) {
+pub fn run_file(path: &str) {
     let mut interpreter = Interpreter::new();
     match fs::read_to_string(path) {
         Ok(contents) => {
