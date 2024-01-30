@@ -1,4 +1,5 @@
 use crate::environment::Environment;
+use crate::scanner::{Token, TokenType};
 use crate::stmt::Stmt;
 use crate::{expr::Expr, scanner::LiteralValue};
 use std::cell::RefCell;
@@ -8,7 +9,7 @@ pub struct Interpreter {
     env: Rc<RefCell<Environment>>,
 }
 
-fn clock_impl(_args: &Vec<LiteralValue>) -> LiteralValue {
+fn clock_impl(env: Rc<RefCell<Environment>>, _args: &Vec<LiteralValue>) -> LiteralValue {
     let now = std::time::SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .expect("111")
@@ -32,6 +33,13 @@ impl Interpreter {
             env: Rc::new(RefCell::new(global)),
         }
     }
+    fn for_closure(parent: Rc<RefCell<Environment>>) -> Self {
+        let environment = Rc::new(RefCell::new(Environment::new()));
+        environment.borrow_mut().enclosing = Some(parent);
+        Self {
+            env: environment.clone(),
+        }
+    }
 
     pub fn interpret(&mut self, stmts: &Vec<Stmt>) -> Result<(), String> {
         for stmt in stmts {
@@ -42,7 +50,12 @@ impl Interpreter {
 
     fn interpret_stmt(&mut self, stmt: Stmt) -> Result<(), String> {
         match stmt {
-            Stmt::Function { name, params, body } => {
+            Stmt::Return { keyword, value } => {
+                // let value = match value {
+                //     Some(expr) => expr.evaluate(self.env.clone())?,
+                //     None => LiteralValue::NIL,
+                // };
+                // Err(value.to_string())
                 todo!()
             }
             Stmt::Expression { expression } => {
@@ -75,7 +88,7 @@ impl Interpreter {
                 let old_env = self.env.clone();
                 self.env = Rc::new(RefCell::new(new_env));
                 for stmt in statements {
-                    self.interpret_stmt(stmt)?;
+                    self.interpret_stmt(*stmt)?;
                 }
                 self.env = old_env;
             }
@@ -95,6 +108,39 @@ impl Interpreter {
                 while condition.evaluate(self.env.clone())?.is_truthy() {
                     self.interpret_stmt(*body.clone())?;
                 }
+            }
+            Stmt::Function { name, params, body } => {
+                let arity = params.len();
+                let name_cloned = name.lexeme.clone();
+                let params: Vec<Token> = params.iter().map(|t| (*t).clone()).collect();
+                let body: Vec<Box<Stmt>> = body.iter().map(|s| (*s).clone()).collect();
+
+                let func_impl = move |parent_env, args: &Vec<LiteralValue>| {
+                    let mut closure_int = Interpreter::for_closure(parent_env);
+
+                    for (index, arg) in args.iter().enumerate() {
+                        closure_int
+                            .env
+                            .borrow_mut()
+                            .define(params[index].lexeme.clone(), (*arg).clone());
+                    }
+
+                    for st in body.iter() {
+                        closure_int
+                            .interpret(&vec![st.as_ref().clone()])
+                            .unwrap_or_else(|_| panic!("function {} execute failed", name_cloned));
+                    }
+
+                    LiteralValue::NIL
+                };
+
+                let callable = LiteralValue::Callable {
+                    name: name.lexeme.clone(),
+                    arity,
+                    func: Rc::new(func_impl),
+                };
+
+                self.env.borrow_mut().define(name.lexeme, callable);
             }
         }
         Ok(())

@@ -1,2 +1,15 @@
 var time = clock();
 print time;
+
+fun test(a,b){
+    a+b;
+}
+print test(1,2);
+
+fun test2(a,b){
+    a = a*2;
+    b = b*2;
+    a+b;
+}
+
+print test2(3,4);

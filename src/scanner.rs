@@ -1,5 +1,7 @@
 use lazy_static::lazy_static;
-use std::{collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
+
+use crate::environment::Environment;
 
 lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, TokenType> = {
@@ -393,7 +395,7 @@ pub enum LiteralValue {
     Callable {
         name: String,
         arity: usize,
-        func: Rc<dyn Fn(&Vec<LiteralValue>) -> LiteralValue>,
+        func: Rc<dyn Fn(Rc<RefCell<Environment>>, &Vec<LiteralValue>) -> LiteralValue>,
         // func:
     },
 }

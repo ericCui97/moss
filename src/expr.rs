@@ -29,6 +29,7 @@ pub enum Expr {
         arguments: Vec<Expr>,
     },
 }
+
 impl std::fmt::Debug for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.to_string())
@@ -172,7 +173,7 @@ impl Expr {
                         for arg in arguments {
                             args.push(arg.evaluate(env.clone())?);
                         }
-                        Ok(func(&args))
+                        Ok(func(env.clone(), &args))
                     }
                     other => Err(format!("{} is not callable", other.to_string())),
                 }

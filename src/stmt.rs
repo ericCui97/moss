@@ -18,7 +18,7 @@ pub enum Stmt {
         else_branch: Option<Box<Stmt>>,
     },
     Block {
-        statements: Vec<Stmt>,
+        statements: Vec<Box<Stmt>>,
     },
     WhileStmt {
         condition: Expr,
@@ -27,7 +27,11 @@ pub enum Stmt {
     Function {
         name: Token,
         params: Vec<Token>,
-        body: Box<Stmt>,
+        body: Vec<Box<Stmt>>,
+    },
+    Return {
+        keyword: Token,
+        value: Option<Expr>,
     },
 }
 impl Stmt {
@@ -35,6 +39,10 @@ impl Stmt {
     #[allow(dead_code)]
     pub fn to_string(&self) -> String {
         match self {
+            Stmt::Return { keyword, value } => match value {
+                Some(expr) => format!("R({} {})", keyword.lexeme, expr.to_string()),
+                None => format!("R({})", keyword.lexeme),
+            },
             Stmt::WhileStmt { condition, body } => {
                 format!("While({} {})", condition.to_string(), body.to_string())
             }

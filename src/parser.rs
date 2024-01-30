@@ -5,7 +5,6 @@ use crate::{
 };
 use core::panic;
 use std::cell::RefCell;
-use std::fmt;
 
 #[derive(Clone)]
 pub struct Parser {
@@ -15,7 +14,7 @@ pub struct Parser {
 
 enum FuncType {
     Funciton,
-    Method,
+    // Method,
 }
 
 impl Parser {
@@ -71,15 +70,11 @@ impl Parser {
         }
         self.consume(TokenType::RIGHT_PAREN, "expect ')' after parameters")?;
         self.consume(TokenType::LEFT_BRACE, "expect '{' before function body")?;
-        let body = match self.block_statement() {
-            Ok(s) => s,
-            Err(e) => panic!("function body parse error:{}", e),
+        let body = match self.block_statement().unwrap() {
+            Stmt::Block { statements } => statements,
+            _ => panic!("expect block statement"),
         };
-        Ok(Stmt::Function {
-            name,
-            params,
-            body: Box::from(body),
-        })
+        Ok(Stmt::Function { name, params, body })
     }
 
     pub fn synchronize(&self) {
@@ -113,9 +108,25 @@ impl Parser {
             self.while_statement()
         } else if self.match_token(&[TokenType::FOR]) {
             self.for_statement()
+        } else if self.match_token(&[TokenType::RETURN]) {
+            self.return_statement()
         } else {
             self.expression_statement()
         }
+    }
+
+    fn return_statement(&self) -> Result<Stmt, String> {
+        let keyword = self.previous();
+        let value = if !self.check(&TokenType::SEMICOLON) {
+            self.expression()?
+        } else {
+            Expr::Literal(LiteralValue::NIL)
+        };
+        self.consume(TokenType::SEMICOLON, "expect ';' after return value")?;
+        Ok(Stmt::Return {
+            keyword: keyword.clone(),
+            value: Some(value),
+        })
     }
 
     fn for_statement(&self) -> Result<Stmt, String> {
@@ -151,7 +162,10 @@ impl Parser {
         let mut body = self.statement()?;
         if let Some(incr) = increment {
             body = Stmt::Block {
-                statements: vec![body, Stmt::Expression { expression: incr }],
+                statements: vec![
+                    Box::new(body),
+                    Box::new(Stmt::Expression { expression: incr }),
+                ],
             };
         }
 
@@ -172,7 +186,7 @@ impl Parser {
 
         if let Some(init) = initializer {
             body = Stmt::Block {
-                statements: vec![init, body],
+                statements: vec![Box::new(init), Box::new(body)],
             };
         }
 
@@ -201,7 +215,7 @@ impl Parser {
         while !self.check(&TokenType::RIGHT_BRACE) && !self.is_at_end() {
             let stmt = self.declaration();
             match stmt {
-                Ok(s) => statements.push(s),
+                Ok(s) => statements.push(Box::new(s)),
                 Err(e) => return Err(e),
             }
         }
