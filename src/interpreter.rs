@@ -1,11 +1,12 @@
 use crate::environment::Environment;
-use crate::scanner::{Token, TokenType};
+use crate::scanner::Token;
 use crate::stmt::Stmt;
 use crate::{expr::Expr, scanner::LiteralValue};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::SystemTime;
 pub struct Interpreter {
+    global: Rc<RefCell<Environment>>,
     env: Rc<RefCell<Environment>>,
 }
 
@@ -16,11 +17,11 @@ fn clock_impl(env: Rc<RefCell<Environment>>, _args: &Vec<LiteralValue>) -> Liter
         .as_millis();
     LiteralValue::NUMBER((now as f64) / 1000.0)
 }
-
+#[allow(clippy::new_without_default)]
 impl Interpreter {
     pub fn new() -> Self {
-        let mut global = Environment::new();
-        global.define(
+        let mut env = Environment::new();
+        env.define(
             String::from("clock"),
             LiteralValue::Callable {
                 name: "clock".to_string(),
@@ -30,13 +31,15 @@ impl Interpreter {
         );
 
         Self {
-            env: Rc::new(RefCell::new(global)),
+            global: Rc::new(RefCell::new(Environment::new())),
+            env: Rc::new(RefCell::new(env)),
         }
     }
     fn for_closure(parent: Rc<RefCell<Environment>>) -> Self {
         let environment = Rc::new(RefCell::new(Environment::new()));
         environment.borrow_mut().enclosing = Some(parent);
         Self {
+            global: Rc::new(RefCell::new(Environment::new())),
             env: environment.clone(),
         }
     }
@@ -50,14 +53,6 @@ impl Interpreter {
 
     fn interpret_stmt(&mut self, stmt: Stmt) -> Result<(), String> {
         match stmt {
-            Stmt::Return { keyword, value } => {
-                // let value = match value {
-                //     Some(expr) => expr.evaluate(self.env.clone())?,
-                //     None => LiteralValue::NIL,
-                // };
-                // Err(value.to_string())
-                todo!()
-            }
             Stmt::Expression { expression } => {
                 expression.evaluate(self.env.clone())?;
             }
@@ -129,6 +124,12 @@ impl Interpreter {
                         closure_int
                             .interpret(&vec![st.as_ref().clone()])
                             .unwrap_or_else(|_| panic!("function {} execute failed", name_cloned));
+
+                        if let Some(value) =
+                            closure_int.global.borrow_mut().get("return".to_string())
+                        {
+                            return value;
+                        }
                     }
 
                     LiteralValue::NIL
@@ -141,6 +142,17 @@ impl Interpreter {
                 };
 
                 self.env.borrow_mut().define(name.lexeme, callable);
+            }
+            Stmt::Return { keyword: _, value } => {
+                let eval_val;
+                if let Some(value) = value {
+                    eval_val = value.evaluate(self.env.clone())?;
+                } else {
+                    eval_val = LiteralValue::NIL;
+                }
+                self.global
+                    .borrow_mut()
+                    .define("return".to_string(), eval_val);
             }
         }
         Ok(())

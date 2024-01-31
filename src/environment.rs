@@ -26,6 +26,13 @@ impl Environment {
         }
     }
 
+    pub fn define_top_level(&mut self, name: String, value: LiteralValue) {
+        match &self.enclosing {
+            Some(enclosing) => enclosing.borrow_mut().define_top_level(name, value),
+            None => self.define(name, value),
+        }
+    }
+
     pub fn assign(&mut self, name: String, value: LiteralValue) -> bool {
         let old_value = self.map.get_mut(&name);
         match (old_value, &self.enclosing) {

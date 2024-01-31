@@ -235,8 +235,8 @@ impl Parser {
         let expr = self.expression()?;
         self.consume(
             TokenType::SEMICOLON,
-            "expect ';' after expression statement",
-        )?;
+            &format!("expect ';' after expression {:?}", expr),
+        );
         Ok(Stmt::Expression { expression: expr })
     }
 

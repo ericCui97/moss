@@ -1,15 +1,40 @@
+// test function call
 var time = clock();
 print time;
-
+// test function define
 fun test(a,b){
-    a+b;
+    return a+b;
 }
 print test(1,2);
 
 fun test2(a,b){
     a = a*2;
     b = b*2;
-    a+b;
+    return a+b;  
 }
 
 print test2(3,4);
+
+
+fun test_conditional_return(a){
+    if(a>0) return 1;
+        return 0;
+}
+print test_conditional_return(1);
+print test_conditional_return(-1);
+
+fun nested_conditional_return(a){
+    if(a>=1){
+        if(a>=2){
+            return ">=2";
+        }
+        return ">=1";
+
+    }
+    
+    return "<1";
+}
+print nested_conditional_return(0);
+print nested_conditional_return(1);
+print nested_conditional_return(2);
+
