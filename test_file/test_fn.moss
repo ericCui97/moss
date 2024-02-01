@@ -24,17 +24,18 @@ print test_conditional_return(1);
 print test_conditional_return(-1);
 
 fun nested_conditional_return(a){
-    if(a>=1){
-        if(a>=2){
-            return ">=2";
+    if(a<3){
+        if(a>1){
+            return a;
         }
-        return ">=1";
-
     }
     
-    return "<1";
+   {
+    a=a+2;
+    return a;
+   }
+   return -1;
 }
-print nested_conditional_return(0);
-print nested_conditional_return(1);
 print nested_conditional_return(2);
+print nested_conditional_return(1);
 

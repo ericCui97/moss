@@ -50,7 +50,7 @@ impl Parser {
         }
     }
 
-    fn function(&self, funcType: &FuncType) -> Result<Stmt, String> {
+    fn function(&self, _: &FuncType) -> Result<Stmt, String> {
         let name = self.consume(
             TokenType::IDENTIFIER,
             "fun declaration should follow before identifier/n",
@@ -76,7 +76,7 @@ impl Parser {
         };
         Ok(Stmt::Function { name, params, body })
     }
-
+    #[allow(dead_code)]
     pub fn synchronize(&self) {
         todo!()
     }
@@ -130,8 +130,8 @@ impl Parser {
     }
 
     fn for_statement(&self) -> Result<Stmt, String> {
-        self.consume(TokenType::LEFT_PAREN, "expect '(' after for");
-        let mut initializer;
+        self.consume(TokenType::LEFT_PAREN, "expect '(' after for")?;
+        let initializer;
         if self.match_token(&[TokenType::SEMICOLON]) {
             initializer = None;
         } else if self.match_token(&[TokenType::VAR]) {
@@ -140,22 +140,20 @@ impl Parser {
             initializer = Some(self.expression_statement()?);
         }
 
-        let mut condition;
-        if !self.check(&TokenType::SEMICOLON) {
+        let condition = if !self.check(&TokenType::SEMICOLON) {
             // expression 不会consume 分号
-            condition = Some(self.expression()?);
+            Some(self.expression()?)
         } else {
-            condition = None;
-        }
+            None
+        };
 
-        self.consume(TokenType::SEMICOLON, "expect ';' after loop condition");
+        self.consume(TokenType::SEMICOLON, "expect ';' after loop condition")?;
 
-        let mut increment;
-        if !self.check(&TokenType::RIGHT_PAREN) {
-            increment = Some(self.expression()?);
+        let increment = if !self.check(&TokenType::RIGHT_PAREN) {
+            Some(self.expression()?)
         } else {
-            increment = None;
-        }
+            None
+        };
 
         self.consume(TokenType::RIGHT_PAREN, "expect ')' after for clauses")?;
 
@@ -236,7 +234,7 @@ impl Parser {
         self.consume(
             TokenType::SEMICOLON,
             &format!("expect ';' after expression {:?}", expr),
-        );
+        )?;
         Ok(Stmt::Expression { expression: expr })
     }
 
@@ -290,6 +288,7 @@ impl Parser {
         }
         Ok(expr)
     }
+    #[allow(dead_code)]
     #[cfg(test)]
     pub fn parse_expression(&self) -> Result<Expr, String> {
         self.expression()

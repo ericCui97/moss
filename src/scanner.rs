@@ -384,6 +384,7 @@ pub enum TokenType {
 
     EOF, // end of file
 }
+type FuncType = Rc<dyn Fn(Rc<RefCell<Environment>>, &Vec<LiteralValue>) -> LiteralValue>;
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Clone)]
 pub enum LiteralValue {
@@ -395,8 +396,7 @@ pub enum LiteralValue {
     Callable {
         name: String,
         arity: usize,
-        func: Rc<dyn Fn(Rc<RefCell<Environment>>, &Vec<LiteralValue>) -> LiteralValue>,
-        // func:
+        func: FuncType,
     },
 }
 
@@ -419,7 +419,7 @@ impl LiteralValue {
             BOOLEAN(b) => LiteralValue::BOOLEAN(*b),
             NUMBER(n) => LiteralValue::BOOLEAN(*n != 0.0f64),
             STRING(s) => LiteralValue::BOOLEAN(!s.is_empty()),
-            Callable => panic!("can not unwrap callable"),
+            _ => panic!("can not unwrap callable"),
         }
     }
 
@@ -429,7 +429,7 @@ impl LiteralValue {
             LiteralValue::BOOLEAN(b) => *b,
             LiteralValue::NUMBER(n) => *n != 0.0f64,
             LiteralValue::STRING(s) => !s.is_empty(),
-            Callable => {
+            _ => {
                 panic!("can not unwrap callable")
             }
         }
@@ -467,7 +467,7 @@ impl LiteralValue {
             LiteralValue::STRING(s) => s.to_string(),
             LiteralValue::BOOLEAN(b) => b.to_string(),
             LiteralValue::NIL => "nil".to_string(),
-            LiteralValue::Callable { name, arity, func } => {
+            LiteralValue::Callable { name, arity, func:_ } => {
                 format!("Callable({} {})", name, arity)
             }
         }

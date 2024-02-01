@@ -9,8 +9,8 @@ pub struct Interpreter {
     global: Rc<RefCell<Environment>>,
     env: Rc<RefCell<Environment>>,
 }
-
-fn clock_impl(env: Rc<RefCell<Environment>>, _args: &Vec<LiteralValue>) -> LiteralValue {
+#[allow(clippy::ptr_arg)]
+fn clock_impl(_: Rc<RefCell<Environment>>, _args: &Vec<LiteralValue>) -> LiteralValue {
     let now = std::time::SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .expect("111")

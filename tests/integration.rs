@@ -25,5 +25,10 @@ mod tests {
         assert!(lines[0].parse::<f64>().unwrap() > 1706547443.625);
         assert_eq!(lines[1], "3");
         assert_eq!(lines[2], "14");
+        assert_eq!(lines[3], "1");
+        assert_eq!(lines[4], "0");
+        assert_eq!(lines[5], "2");
+        assert_eq!(lines[6], "3");
+
     }
 }

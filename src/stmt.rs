@@ -1,5 +1,6 @@
 use crate::{expr::Expr, scanner::Token};
 #[allow(clippy::enum_variant_names)]
+#[allow(clippy::vec_box)]
 #[derive(Clone)]
 pub enum Stmt {
     Expression {
@@ -78,7 +79,14 @@ impl Stmt {
                 s
             }
             Stmt::Function { name, params, body } => {
-                todo!()
+                let mut s = String::from("Function (");
+                s.push_str(&name.lexeme);
+                s.push_str(&params.len().to_string());
+                for stmt in body {
+                    s.push_str(&stmt.to_string());
+                }
+                s.push(')');
+                s
             }
         }
     }
