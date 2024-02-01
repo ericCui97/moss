@@ -1,7 +1,6 @@
 use lazy_static::lazy_static;
 use std::{collections::HashMap, rc::Rc};
 
-
 lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, TokenType> = {
         [
@@ -30,7 +29,6 @@ lazy_static! {
 }
 
 #[warn(non_camel_case_types)]
-#[warn(dead_code)]
 #[derive(Clone)]
 pub struct Scanner<'a> {
     source: &'a str,
@@ -343,6 +341,10 @@ pub enum TokenType {
     // one or two character tokens,
     BANG,
     // !
+    // ++
+    PLUS_PLUS,
+    //--
+    MINUS_MINUS,
     BANG_EQUAL,
     // !=
     EQUAL,
@@ -354,6 +356,7 @@ pub enum TokenType {
     GREATER_EQUAL,
     // >=
     LESS,
+
     // <
     LESS_EQUAL,
     // <=
@@ -466,7 +469,11 @@ impl LiteralValue {
             LiteralValue::STRING(s) => s.to_string(),
             LiteralValue::BOOLEAN(b) => b.to_string(),
             LiteralValue::NIL => "nil".to_string(),
-            LiteralValue::Callable { name, arity, func:_ } => {
+            LiteralValue::Callable {
+                name,
+                arity,
+                func: _,
+            } => {
                 format!("Callable({} {})", name, arity)
             }
         }
