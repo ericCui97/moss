@@ -10,7 +10,7 @@ pub struct Interpreter {
     env: Rc<RefCell<Environment>>,
 }
 #[allow(clippy::ptr_arg)]
-fn clock_impl(_: Rc<RefCell<Environment>>, _args: &Vec<LiteralValue>) -> LiteralValue {
+fn clock_impl(_args: &Vec<LiteralValue>) -> LiteralValue {
     let now = std::time::SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .expect("111")
@@ -35,12 +35,13 @@ impl Interpreter {
             env: Rc::new(RefCell::new(env)),
         }
     }
+    // make a new interpreter for closure
     fn for_closure(parent: Rc<RefCell<Environment>>) -> Self {
         let environment = Rc::new(RefCell::new(Environment::new()));
         environment.borrow_mut().enclosing = Some(parent);
         Self {
             global: Rc::new(RefCell::new(Environment::new())),
-            env: environment.clone(),
+            env: environment,
         }
     }
 
@@ -107,11 +108,12 @@ impl Interpreter {
             Stmt::Function { name, params, body } => {
                 let arity = params.len();
                 let name_cloned = name.lexeme.clone();
+
                 let params: Vec<Token> = params.iter().map(|t| (*t).clone()).collect();
                 let body: Vec<Box<Stmt>> = body.iter().map(|s| (*s).clone()).collect();
-
-                let func_impl = move |parent_env, args: &Vec<LiteralValue>| {
-                    let mut closure_int = Interpreter::for_closure(parent_env);
+                let parent_env = self.env.clone();
+                let func_impl = move |args: &Vec<LiteralValue>| {
+                    let mut closure_int = Interpreter::for_closure(parent_env.clone());
 
                     for (index, arg) in args.iter().enumerate() {
                         closure_int
@@ -121,16 +123,15 @@ impl Interpreter {
                     }
 
                     for st in body.iter() {
-                        closure_int
-                            .interpret(&vec![st.as_ref().clone()])
-                            .unwrap_or_else(|_| panic!("function {} execute failed", name_cloned));
+                        // println!("st: {:?}", st);
 
-                        if let Some(value) =
-                            closure_int.global.borrow_mut().get("return".to_string())
-                        {
+                        closure_int.interpret(&vec![*(*st).clone()]).unwrap();
+                        // .unwrap_or_else(|_| panic!("function {} execute failed", name_cloned));
+                        if let Some(value) = closure_int.global.borrow_mut().get("return".to_string()) {
                             return value;
                         }
                     }
+
 
                     LiteralValue::NIL
                 };

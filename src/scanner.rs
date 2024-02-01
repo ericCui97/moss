@@ -1,7 +1,6 @@
 use lazy_static::lazy_static;
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{collections::HashMap, rc::Rc};
 
-use crate::environment::Environment;
 
 lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, TokenType> = {
@@ -384,7 +383,7 @@ pub enum TokenType {
 
     EOF, // end of file
 }
-type FuncType = Rc<dyn Fn(Rc<RefCell<Environment>>, &Vec<LiteralValue>) -> LiteralValue>;
+type FuncType = Rc<dyn Fn(&Vec<LiteralValue>) -> LiteralValue>;
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Clone)]
 pub enum LiteralValue {

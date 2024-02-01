@@ -493,7 +493,7 @@ mod tests {
         let parser = Parser::new(tokens);
         let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
         //		println!("{:?}", expr.to_string());
-        assert_eq!(expr.to_string(), "B(L(1) + B(L(2) * L(3)))");
+        assert_eq!(expr.to_string(), "Binary (Literal (1) + Binary (Literal (2) * Literal (3)))");
     }
 
     #[test]
@@ -514,7 +514,7 @@ mod tests {
         let parser = Parser::new(tokens);
         let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
         //		println!("{:?}", expr);
-        assert_eq!(expr.to_string(), "B(L(1) + L(2))");
+        assert_eq!(expr.to_string(), "Binary (Literal (1) + Literal (2))");
     }
 
     #[test]
@@ -525,7 +525,7 @@ mod tests {
         let parser = Parser::new(tokens);
         let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
         //		println!("{:?}", expr.to_string());
-        assert_eq!(expr.to_string(), "B(G(B(L(1) + L(21))) * L(2432))");
+        assert_eq!(expr.to_string(), "Binary (Grouping (Binary (Literal (1) + Literal (21))) * Literal (2432))");
     }
 
     #[test]
@@ -538,7 +538,7 @@ mod tests {
         //		println!("{:?}", expr.to_string());
         assert_eq!(
             expr.to_string(),
-            "B(B(G(B(L(1.2) + L(2))) * L(3.4)) >= L(4))"
+            "Binary (Binary (Grouping (Binary (Literal (1.2) + Literal (2))) * Literal (3.4)) >= Literal (4))"
         );
     }
 
@@ -550,7 +550,7 @@ mod tests {
         let parser = Parser::new(tokens);
         let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
         //		println!("{:?}", expr);
-        assert_eq!(expr.to_string(), "B(L(1) + B(L(2) * L(3)))");
+        assert_eq!(expr.to_string(), "Binary (Literal (1) + Binary (Literal (2) * Literal (3)))");
     }
 
     #[test]
@@ -560,6 +560,6 @@ mod tests {
         let tokens = scan.scan_tokens().unwrap();
         let parser = Parser::new(tokens);
         let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
-        assert_eq!(expr.to_string(), "U(- L(1))");
+        assert_eq!(expr.to_string(), "Unary (- Literal (1))");
     }
 }

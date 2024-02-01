@@ -42,11 +42,11 @@ impl Expr {
         match self {
             Expr::Grouping(e) => {
                 //				String::from('G') + e.to_token_sequence().as_ref()
-                format!("G({})", e.to_string())
+                format!("Grouping ({})", e.to_string())
             }
             Expr::Binary(left, op, right) => {
                 format!(
-                    "B({} {} {})",
+                    "Binary ({} {} {})",
                     left.to_string(),
                     op.lexeme,
                     right.to_string()
@@ -54,22 +54,22 @@ impl Expr {
             }
             Expr::Literal(lit) => {
                 //				lit.to_string()
-                format!("L({})", lit.to_string())
+                format!("Literal ({})", lit.to_string())
             }
 
             Expr::Unary(op, right) => {
                 //				format!("{} {}",op.lexeme,right.to_token_sequence())
-                format!("U({} {})", op.lexeme, right.to_string())
+                format!("Unary ({} {})", op.lexeme, right.to_string())
             }
             Expr::Variable(name) => {
-                format!("V({})", name.lexeme)
+                format!("Variable ({})", name.lexeme)
             }
             Expr::Assign { name, value } => {
-                format!("A({} {})", name.lexeme, value.to_string())
+                format!("Assign ({} {})", name.lexeme, value.to_string())
             }
             Expr::Logical(left, op, right) => {
                 format!(
-                    "Logical({} {} {})",
+                    "Logical ({} {} {})",
                     left.to_string(),
                     op.lexeme,
                     right.to_string()
@@ -80,7 +80,7 @@ impl Expr {
                 paren,
                 arguments,
             } => {
-                let mut s = String::from("Call(");
+                let mut s = String::from("Call (");
                 s.push_str(&callee.to_string());
                 s.push_str(&paren.lexeme);
                 for arg in arguments {
@@ -173,7 +173,7 @@ impl Expr {
                         for arg in arguments {
                             args.push(arg.evaluate(env.clone())?);
                         }
-                        Ok(func(env.clone(), &args))
+                        Ok(func(&args))
                     }
                     other => Err(format!("{} is not callable", other.to_string())),
                 }

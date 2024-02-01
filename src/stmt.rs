@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::{expr::Expr, scanner::Token};
 #[allow(clippy::enum_variant_names)]
 #[allow(clippy::vec_box)]
@@ -35,6 +37,12 @@ pub enum Stmt {
         value: Option<Expr>,
     },
 }
+
+impl Debug for Stmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.to_string())
+    }
+}
 impl Stmt {
     #[allow(clippy::inherent_to_string)]
     #[allow(dead_code)]
@@ -42,22 +50,22 @@ impl Stmt {
         match self {
             Stmt::Return { keyword, value } => match value {
                 Some(expr) => format!("R({} {})", keyword.lexeme, expr.to_string()),
-                None => format!("R({})", keyword.lexeme),
+                None => format!("Return ({} :void)", keyword.lexeme),
             },
             Stmt::WhileStmt { condition, body } => {
-                format!("While({} {})", condition.to_string(), body.to_string())
+                format!("While ({} {})", condition.to_string(), body.to_string())
             }
             Stmt::Expression { expression } => {
-                format!("E({})", expression.to_string())
+                format!("Expression ({})", expression.to_string())
             }
             Stmt::Print { expression } => {
-                format!("P({})", expression.to_string())
+                format!("Print ({})", expression.to_string())
             }
             Stmt::Var { name, initializer } => {
-                format!("V({} {})", name.lexeme, initializer.to_string())
+                format!("Var ({} {})", name.lexeme, initializer.to_string())
             }
             Stmt::Block { statements } => {
-                let mut s = String::from("B(");
+                let mut s = String::from("Block (");
                 for stmt in statements {
                     s.push_str(&stmt.to_string());
                 }
