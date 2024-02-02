@@ -6,8 +6,8 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::SystemTime;
 pub struct Interpreter {
-    global: Rc<RefCell<Environment>>,
-    env: Rc<RefCell<Environment>>,
+    pub special: Rc<RefCell<Environment>>,
+    pub env: Rc<RefCell<Environment>>,
 }
 #[allow(clippy::ptr_arg)]
 fn clock_impl(_args: &Vec<LiteralValue>) -> LiteralValue {
@@ -31,7 +31,7 @@ impl Interpreter {
         );
 
         Self {
-            global: Rc::new(RefCell::new(Environment::new())),
+            special: Rc::new(RefCell::new(Environment::new())),
             env: Rc::new(RefCell::new(env)),
         }
     }
@@ -40,8 +40,17 @@ impl Interpreter {
         let environment = Rc::new(RefCell::new(Environment::new()));
         environment.borrow_mut().enclosing = Some(parent);
         Self {
-            global: Rc::new(RefCell::new(Environment::new())),
+            special: Rc::new(RefCell::new(Environment::new())),
             env: environment,
+        }
+    }
+
+    pub fn for_anonymous(parent:Environment)->Self{
+        let mut env = Environment::new();
+        env.enclosing = Some(Rc::new(RefCell::new(parent)));
+        Self {
+            special: Rc::new(RefCell::new(Environment::new())),
+            env: Rc::new(RefCell::new(env)),
         }
     }
 
@@ -127,7 +136,7 @@ impl Interpreter {
 
                         closure_int.interpret(&vec![*(*st).clone()]).unwrap();
                         // .unwrap_or_else(|_| panic!("function {} execute failed", name_cloned));
-                        if let Some(value) = closure_int.global.borrow_mut().get("return".to_string()) {
+                        if let Some(value) = closure_int.special.borrow_mut().get("return".to_string()) {
                             return value;
                         }
                     }
@@ -151,7 +160,7 @@ impl Interpreter {
                 } else {
                     eval_val = LiteralValue::NIL;
                 }
-                self.global
+                self.special
                     .borrow_mut()
                     .define("return".to_string(), eval_val);
             }

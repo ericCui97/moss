@@ -1,0 +1,31 @@
+fun test(fn){
+    for(var i=0;i<3;i=i+1){
+        fn(i);
+    }
+}
+
+test(fun(a){
+    print a;
+});
+
+
+var test2 = fun(a){
+    return a*a;
+};
+print test2(2);
+print test2(3);
+
+var test3;
+if(true){
+    test3 = fun(a){
+        return a+1;
+    };
+}
+print test3(2);
+
+// or 
+var test4 = false or fun(a){
+    return a+1;
+};
+
+print test4(99);

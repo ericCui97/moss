@@ -5,6 +5,7 @@ use crate::{
 };
 use core::panic;
 use std::cell::RefCell;
+use std::ops::Deref;
 
 #[derive(Clone)]
 pub struct Parser {
@@ -245,14 +246,42 @@ impl Parser {
     }
 
     fn expression(&self) -> Result<Expr, String> {
-        self.assignment()
+      
+            self.assignment()
+        
+    }
+
+    fn function_expression(&self) -> Result<Expr, String> {
+        self.consume(TokenType::LEFT_PAREN, "expect '(' after anonymous function")?;
+        let mut params = vec![];
+        if !self.check(&TokenType::RIGHT_PAREN){
+            loop {
+                if params.len() >= 255 {
+                    return Err("can't have more than 255 parameters".to_string());
+                }
+                params.push(self.consume(TokenType::IDENTIFIER, "expect parameter name")?);
+                if !self.match_token(&[TokenType::COMMA]) {
+                    break;
+                }
+            }
+
+           
+        }
+        self.consume(TokenType::RIGHT_PAREN, "expect ')' after function parameters")?;
+        self.consume(TokenType::LEFT_BRACE, "expect '{' before function body")?;
+        let body = match self.block_statement().unwrap() {
+            Stmt::Block { statements } => statements,
+            _ => panic!("expect block statement in function body"),
+        };
+        let _body = body.iter().map(|s| *s.clone()).collect();
+        Ok(Expr::AnonymousFn { params, body:_body })
     }
 
     fn assignment(&self) -> Result<Expr, String> {
         let expr = self.or()?;
         if self.match_token(&[TokenType::EQUAL]) {
             let _equals = self.previous();
-            let value = self.assignment()?;
+            let value = self.expression()?;
             match expr {
                 Expr::Variable(name) => {
                     return Ok(Expr::Assign {
@@ -395,7 +424,8 @@ impl Parser {
                 }
             }
         }
-        let paren = self.consume(TokenType::RIGHT_PAREN, "expect ')' after arguments")?;
+        let paren = self.consume(TokenType::RIGHT_PAREN, 
+        &format!("expect ) after params in function call{}",self.peek().line_number))?;
         Ok(Expr::Call {
             callee: Box::from(callee),
             paren,
@@ -424,6 +454,10 @@ impl Parser {
             TokenType::IDENTIFIER => {
                 self.advance();
                 Ok(Expr::Variable(token.clone()))
+            }
+            TokenType::FUN => {
+                self.advance();
+                self.function_expression()
             }
             _ => Err(format!("expect expression, got {:?}", token.token_type)),
         }
@@ -493,7 +527,10 @@ mod tests {
         let parser = Parser::new(tokens);
         let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
         //		println!("{:?}", expr.to_string());
-        assert_eq!(expr.to_string(), "Binary (Literal (1) + Binary (Literal (2) * Literal (3)))");
+        assert_eq!(
+            expr.to_string(),
+            "Binary (Literal (1) + Binary (Literal (2) * Literal (3)))"
+        );
     }
 
     #[test]
@@ -525,7 +562,10 @@ mod tests {
         let parser = Parser::new(tokens);
         let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
         //		println!("{:?}", expr.to_string());
-        assert_eq!(expr.to_string(), "Binary (Grouping (Binary (Literal (1) + Literal (21))) * Literal (2432))");
+        assert_eq!(
+            expr.to_string(),
+            "Binary (Grouping (Binary (Literal (1) + Literal (21))) * Literal (2432))"
+        );
     }
 
     #[test]
@@ -550,7 +590,10 @@ mod tests {
         let parser = Parser::new(tokens);
         let expr = unwrap_stmts_as_single_expr(parser.parse().unwrap());
         //		println!("{:?}", expr);
-        assert_eq!(expr.to_string(), "Binary (Literal (1) + Binary (Literal (2) * Literal (3)))");
+        assert_eq!(
+            expr.to_string(),
+            "Binary (Literal (1) + Binary (Literal (2) * Literal (3)))"
+        );
     }
 
     #[test]

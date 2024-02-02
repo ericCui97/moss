@@ -39,4 +39,15 @@ mod tests {
         assert_eq!(lines[2], "1");
         assert_eq!(lines[3], "2");
     }
+    #[test]
+    fn test_fn_anonymous () {
+        let lines = run_file_via_command("test_file/function/anon_fn.moss").unwrap();
+        assert_eq!(lines[0], "0");
+        assert_eq!(lines[1], "1");
+        assert_eq!(lines[2], "2");
+        assert_eq!(lines[3], "4");
+        assert_eq!(lines[4], "9");
+        assert_eq!(lines[5], "3");
+        assert_eq!(lines[6], "100");
+    }
 }

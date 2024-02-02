@@ -1,7 +1,10 @@
 use crate::environment::Environment;
+use crate::interpreter::Interpreter;
 use crate::scanner::{LiteralValue, Token, TokenType};
+use crate::stmt::Stmt;
 use std::cell::RefCell;
 use std::rc::Rc;
+
 #[derive(Clone)]
 pub enum Expr {
     // grouping expression like (1+2)
@@ -27,6 +30,11 @@ pub enum Expr {
         callee: Box<Expr>,
         paren: Token,
         arguments: Vec<Expr>,
+    },
+
+    AnonymousFn {
+        params: Vec<Token>,
+        body: Vec<Stmt>,
     },
 }
 
@@ -85,6 +93,17 @@ impl Expr {
                 s.push_str(&paren.lexeme);
                 for arg in arguments {
                     s.push_str(&arg.to_string());
+                }
+                s.push(')');
+                s
+            }
+            Expr::AnonymousFn { params, body } => {
+                let mut s = String::from("AnonymousFn (");
+                for p in params {
+                    s.push_str(&p.lexeme);
+                }
+                for stmt in body {
+                    s.push_str(&stmt.to_string());
                 }
                 s.push(')');
                 s
@@ -155,7 +174,7 @@ impl Expr {
             }
             Expr::Call {
                 callee,
-                paren:_,
+                paren: _,
                 arguments,
             } => {
                 let callable = (*callee).evaluate(env.clone())?;
@@ -240,6 +259,48 @@ impl Expr {
                         ))
                     }
                 }
+            }
+            Expr::AnonymousFn { params, body } => {
+
+                let new_env = Environment::new();
+                let arity = params.len();
+                let env = env.clone();
+                let params = params.iter().map(|t| (*t).clone()).collect::<Vec<Token>>();
+                let body = body.iter().map(|t| (*t).clone()).collect::<Vec<crate::stmt::Stmt>>();
+
+
+                let func_impl = move |args: &Vec<LiteralValue>| {
+                    let mut anonymous_int = Interpreter::for_anonymous(new_env.clone());
+                   
+
+
+                    for (index, arg) in args.iter().enumerate() {
+                        anonymous_int
+                            .env
+                            .borrow_mut()
+                            .define(params[index].lexeme.clone(), (*arg).clone());
+                    }
+
+                    for st in body.iter() {
+                        // println!("st: {:?}", st);
+
+                        anonymous_int.interpret(&vec![(*st).clone()]).unwrap();
+                        // .unwrap_or_else(|_| panic!("function {} execute failed", name_cloned));
+                        if let Some(value) =
+                        anonymous_int.special.borrow_mut().get("return".to_string())
+                        {
+                            return value;
+                        }
+                    }
+
+                    LiteralValue::NIL
+                };
+
+                Ok(LiteralValue::Callable {
+                    name: "anonymous".to_string(),
+                    arity,
+                    func: Rc::new(func_impl),
+                })
             }
         }
     }
