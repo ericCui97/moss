@@ -4,6 +4,7 @@ mod interpreter;
 mod parser;
 mod scanner;
 mod stmt;
+mod token;
 use crate::interpreter::Interpreter;
 use crate::scanner::Scanner;
 use parser::Parser;

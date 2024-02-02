@@ -1,12 +1,8 @@
+use crate::expr::Expr;
 use crate::stmt::Stmt;
-use crate::{
-    expr::Expr,
-    scanner::{LiteralValue, Token, TokenType},
-};
 use core::panic;
 use std::cell::RefCell;
-use std::ops::Deref;
-
+use crate::token::{LiteralValue, Token, TokenType};
 #[derive(Clone)]
 pub struct Parser {
     tokens: Vec<Token>,

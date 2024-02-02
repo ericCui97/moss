@@ -1,7 +1,10 @@
 use crate::environment::Environment;
-use crate::scanner::Token;
 use crate::stmt::Stmt;
-use crate::{expr::Expr, scanner::LiteralValue};
+use crate::expr::Expr;
+use crate::token::{
+    LiteralValue,
+    Token,
+};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::SystemTime;
@@ -116,8 +119,6 @@ impl Interpreter {
             }
             Stmt::Function { name, params, body } => {
                 let arity = params.len();
-                let name_cloned = name.lexeme.clone();
-
                 let params: Vec<Token> = params.iter().map(|t| (*t).clone()).collect();
                 let body: Vec<Box<Stmt>> = body.iter().map(|s| (*s).clone()).collect();
                 let parent_env = self.env.clone();

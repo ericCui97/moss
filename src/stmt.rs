@@ -1,6 +1,8 @@
 use std::fmt::Debug;
 
-use crate::{expr::Expr, scanner::Token};
+use crate::expr::Expr;
+use crate::token::Token;
+
 #[allow(clippy::enum_variant_names)]
 #[allow(clippy::vec_box)]
 #[derive(Clone)]
@@ -49,8 +51,8 @@ impl Stmt {
     pub fn to_string(&self) -> String {
         match self {
             Stmt::Return { keyword, value } => match value {
-                Some(expr) => format!("R({} {})", keyword.lexeme, expr.to_string()),
-                None => format!("Return ({} :void)", keyword.lexeme),
+                Some(expr) => format!("Return ({},{})", keyword.lexeme, expr.to_string()),
+                None => format!("Return ({},void)", keyword.lexeme),
             },
             Stmt::WhileStmt { condition, body } => {
                 format!("While ({} {})", condition.to_string(), body.to_string())
@@ -62,7 +64,7 @@ impl Stmt {
                 format!("Print ({})", expression.to_string())
             }
             Stmt::Var { name, initializer } => {
-                format!("Var ({} {})", name.lexeme, initializer.to_string())
+                format!("Var ({},{})", name.lexeme, initializer.to_string())
             }
             Stmt::Block { statements } => {
                 let mut s = String::from("Block (");
@@ -77,7 +79,7 @@ impl Stmt {
                 then_branch,
                 else_branch,
             } => {
-                let mut s = String::from("I(");
+                let mut s = String::from("If(");
                 s.push_str(&condition.to_string());
                 s.push_str(&then_branch.to_string());
                 if let Some(else_branch) = else_branch {

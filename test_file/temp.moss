@@ -1,0 +1,4 @@
+var test2 = fun(a){
+    return a*a;
+};
+print test2(2);

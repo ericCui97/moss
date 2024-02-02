@@ -1,7 +1,7 @@
-use crate::scanner::LiteralValue;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use crate::token::LiteralValue;
 
 #[derive(Default, Clone)]
 pub struct Environment {

@@ -1,7 +1,7 @@
 use crate::environment::Environment;
 use crate::interpreter::Interpreter;
-use crate::scanner::{LiteralValue, Token, TokenType};
 use crate::stmt::Stmt;
+use crate::token::{LiteralValue, Token, TokenType};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -97,13 +97,10 @@ impl Expr {
                 s.push(')');
                 s
             }
-            Expr::AnonymousFn { params, body } => {
+            Expr::AnonymousFn { params, body: _ } => {
                 let mut s = String::from("AnonymousFn (");
                 for p in params {
                     s.push_str(&p.lexeme);
-                }
-                for stmt in body {
-                    s.push_str(&stmt.to_string());
                 }
                 s.push(')');
                 s
@@ -263,7 +260,6 @@ impl Expr {
             Expr::AnonymousFn { params, body } => {
                 let new_env = Environment::new();
                 let arity = params.len();
-                let env = env.clone();
                 let params = params.iter().map(|t| (*t).clone()).collect::<Vec<Token>>();
                 let body = body
                     .iter()
