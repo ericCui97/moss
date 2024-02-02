@@ -31,9 +31,9 @@ pub enum TokenType {
     BANG,
     // /!
     // ++
-    PLUS_PLUS,
+    // PLUS_PLUS,
     //--
-    MINUS_MINUS,
+    // MINUS_MINUS,
     BANG_EQUAL,
     // !=
     EQUAL,
