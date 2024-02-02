@@ -29,7 +29,6 @@ mod tests {
         assert_eq!(lines[4], "0");
         assert_eq!(lines[5], "2");
         assert_eq!(lines[6], "3");
-
     }
     #[test]
     fn test_fn_closure() {
@@ -40,7 +39,7 @@ mod tests {
         assert_eq!(lines[3], "2");
     }
     #[test]
-    fn test_fn_anonymous () {
+    fn test_fn_anonymous() {
         let lines = run_file_via_command("test_file/function/anon_fn.moss").unwrap();
         assert_eq!(lines[0], "0");
         assert_eq!(lines[1], "1");

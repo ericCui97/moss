@@ -261,18 +261,17 @@ impl Expr {
                 }
             }
             Expr::AnonymousFn { params, body } => {
-
                 let new_env = Environment::new();
                 let arity = params.len();
                 let env = env.clone();
                 let params = params.iter().map(|t| (*t).clone()).collect::<Vec<Token>>();
-                let body = body.iter().map(|t| (*t).clone()).collect::<Vec<crate::stmt::Stmt>>();
-
+                let body = body
+                    .iter()
+                    .map(|t| (*t).clone())
+                    .collect::<Vec<crate::stmt::Stmt>>();
 
                 let func_impl = move |args: &Vec<LiteralValue>| {
                     let mut anonymous_int = Interpreter::for_anonymous(new_env.clone());
-                   
-
 
                     for (index, arg) in args.iter().enumerate() {
                         anonymous_int
@@ -287,7 +286,7 @@ impl Expr {
                         anonymous_int.interpret(&vec![(*st).clone()]).unwrap();
                         // .unwrap_or_else(|_| panic!("function {} execute failed", name_cloned));
                         if let Some(value) =
-                        anonymous_int.special.borrow_mut().get("return".to_string())
+                            anonymous_int.special.borrow_mut().get("return".to_string())
                         {
                             return value;
                         }

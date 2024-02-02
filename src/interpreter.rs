@@ -45,7 +45,7 @@ impl Interpreter {
         }
     }
 
-    pub fn for_anonymous(parent:Environment)->Self{
+    pub fn for_anonymous(parent: Environment) -> Self {
         let mut env = Environment::new();
         env.enclosing = Some(Rc::new(RefCell::new(parent)));
         Self {
@@ -136,11 +136,12 @@ impl Interpreter {
 
                         closure_int.interpret(&vec![*(*st).clone()]).unwrap();
                         // .unwrap_or_else(|_| panic!("function {} execute failed", name_cloned));
-                        if let Some(value) = closure_int.special.borrow_mut().get("return".to_string()) {
+                        if let Some(value) =
+                            closure_int.special.borrow_mut().get("return".to_string())
+                        {
                             return value;
                         }
                     }
-
 
                     LiteralValue::NIL
                 };

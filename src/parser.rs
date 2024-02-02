@@ -246,15 +246,13 @@ impl Parser {
     }
 
     fn expression(&self) -> Result<Expr, String> {
-      
-            self.assignment()
-        
+        self.assignment()
     }
 
     fn function_expression(&self) -> Result<Expr, String> {
         self.consume(TokenType::LEFT_PAREN, "expect '(' after anonymous function")?;
         let mut params = vec![];
-        if !self.check(&TokenType::RIGHT_PAREN){
+        if !self.check(&TokenType::RIGHT_PAREN) {
             loop {
                 if params.len() >= 255 {
                     return Err("can't have more than 255 parameters".to_string());
@@ -264,17 +262,21 @@ impl Parser {
                     break;
                 }
             }
-
-           
         }
-        self.consume(TokenType::RIGHT_PAREN, "expect ')' after function parameters")?;
+        self.consume(
+            TokenType::RIGHT_PAREN,
+            "expect ')' after function parameters",
+        )?;
         self.consume(TokenType::LEFT_BRACE, "expect '{' before function body")?;
         let body = match self.block_statement().unwrap() {
             Stmt::Block { statements } => statements,
             _ => panic!("expect block statement in function body"),
         };
         let _body = body.iter().map(|s| *s.clone()).collect();
-        Ok(Expr::AnonymousFn { params, body:_body })
+        Ok(Expr::AnonymousFn {
+            params,
+            body: _body,
+        })
     }
 
     fn assignment(&self) -> Result<Expr, String> {
@@ -424,8 +426,13 @@ impl Parser {
                 }
             }
         }
-        let paren = self.consume(TokenType::RIGHT_PAREN, 
-        &format!("expect ) after params in function call{}",self.peek().line_number))?;
+        let paren = self.consume(
+            TokenType::RIGHT_PAREN,
+            &format!(
+                "expect ) after params in function call{}",
+                self.peek().line_number
+            ),
+        )?;
         Ok(Expr::Call {
             callee: Box::from(callee),
             paren,
