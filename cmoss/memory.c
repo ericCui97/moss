@@ -9,5 +9,11 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
   }
 
   void* result = realloc(pointer, newSize);
+  if (result == NULL) exit(1);
   return result;
+}
+
+void freeChunk(Chunk* chunk) {
+  FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
+  initChunk(chunk);
 }
