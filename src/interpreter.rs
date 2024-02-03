@@ -170,5 +170,3 @@ impl Interpreter {
         Ok(())
     }
 }
-
-//  var a=1;while(a<4){a=a+1;print a;}
