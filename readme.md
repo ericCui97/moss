@@ -7,6 +7,32 @@ just for curiosity.
 
 ### introduction of moss
 
+moss version of fibonacci implementation.
+
+``` js
+fun fib(n) {
+  if (n < 2) return n;
+  return fib(n - 1) + fib(n - 2); 
+}
+
+var before = clock();
+print fib(40);
+var after = clock();
+print after - before;
+
+```
+
+as we can see,it implement the minimal feature of a function based programming language. since now, `print` is not a function, it's a keyword, and `clock` is a function, it's a built-in function.
+
+we can declare a function by `fun` keyword, and call a function by `function_name(arguments)`.
+we can declare a variable by `var` keyword, and assign a value to a variable by `variable_name = value`.
+moss support `if`,`while`,`for` statement, and `+ - * /` operator.
+the primitive type:
+
+- number: which is f64 in rust
+- string: just a string
+- boolean: true or false
+
 ### install
 
 ```bash
@@ -33,6 +59,12 @@ run test,both unit test and integration test.
 cargo test
 ```
 
+### plan
+
+[ ] implement a backend of moss,based on byteCode,which is more efficient than ast.
+[ ] implement a standard library of moss,which is more useful than just a print and clock.
+[ ] build a wasm version for moss, and build a web playground for it;
+
 ## todo
 
 ### feature
@@ -41,13 +73,14 @@ cargo test
 - [x] var expression
 - [x] math compute
 - [x] assignment expression
-- [] i++ i-- ++i --i += -= *= /=
+- [ ] i++ i-- ++i --i += -= *= /=
 - [x] if expression
 - [x] while expression
 - [x] function call expression
 - [x] function define expression
 - [ ] array expression
 - [ ] object expression
+- [ ] scoping and scop resolve
 
 ### bug
 

@@ -180,6 +180,7 @@ impl Interpreter {
         Ok(())
     }
     pub fn resolve(&self,token:&Token,depth:usize){
+        // self.locals.insert(token.clone(),depth);
         todo!()
     }
 }
