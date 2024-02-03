@@ -20,11 +20,22 @@ impl Resolver {
     pub fn resolve(&mut self, stmt: &Stmt) -> Result<(), String> {
         match stmt {
             Stmt::Block { statements: _ } => Ok(self.resolve_block(stmt.clone())?),
-            Stmt::Function { name, params, body } => Ok(self.resolve_function(stmt)?),
-            Stmt::Var { name, initializer } => Ok(self.resolve_var(stmt)?),
+            Stmt::Function { name:_, params:_, body:_ } => Ok(self.resolve_function(stmt)?),
+            Stmt::Var { name:_, initializer:_ } => Ok(self.resolve_var(stmt)?),
             Stmt::Expression { expression } => Ok(self.resolve_expr(expression)?),
-            Stmt::IfStmt { condition, then_branch, else_branch }=> Ok(self.resolve_if(stmt)?),
-
+            Stmt::IfStmt { condition:_, then_branch:_, else_branch:_ }=> Ok(self.resolve_if(stmt)?),
+            Stmt::Print { expression }=> Ok(self.resolve_expr(expression)?),
+            Stmt::Return { keyword:_, value }=> {
+                if let Some(value) = value {
+                    self.resolve_expr(value)?;
+                }
+                Ok(())
+            }
+            Stmt::WhileStmt { condition, body }=>{
+                self.resolve_expr(condition)?;
+                self.resolve(body.as_ref())?;
+                Ok(())
+            }
             _ => panic!("Expected block statement in resolve"),
         }
     }
@@ -48,7 +59,7 @@ impl Resolver {
             self.define(param.lexeme.as_str());
         }
         for stmt in body {
-            self.resolve(stmt);
+            self.resolve(stmt).unwrap();
         }
         self.resolve_end();
     }
@@ -57,9 +68,9 @@ impl Resolver {
         match stmt {
             Stmt::IfStmt { condition, then_branch, else_branch } => {
                 self.resolve_expr(condition)?;
-                self.resolve(then_branch)?;
+                self.resolve(then_branch.as_ref())?;
                 if let Some(else_branch) = else_branch {
-                    self.resolve(else_branch)?;
+                    self.resolve(else_branch.as_ref())?;
                 }
                 Ok(())
             }
@@ -100,6 +111,42 @@ impl Resolver {
     fn resolve_expr(&mut self, expr: &Expr) -> Result<(), String> {
         match expr {
             Expr::Variable(_name) => self.resolve_var_expr(expr),
+            Expr::Binary(left,_ ,right )=> {
+                self.resolve_expr(left)?;
+                self.resolve_expr(right)?;
+                Ok(())
+            }
+            Expr::Call { callee, paren:_, arguments }=>{
+                self.resolve_expr(callee.as_ref())?;
+                for arg in arguments {
+                    self.resolve_expr(arg)?;
+                }
+                Ok(())
+            }
+            Expr::Grouping(expr) => self.resolve_expr(expr),
+            Expr::Literal(_value) => Ok(()),
+            Expr::Logical(left, _,right)=>{
+                self.resolve_expr(left)?;
+                self.resolve_expr(right)?;
+                Ok(())
+            }
+            Expr::Unary(_, right)=>{
+                self.resolve_expr(right)?;
+                Ok(())
+            }
+            Expr::AnonymousFn {body,params }=>{
+                self.resolve_begin();
+                for param in params {
+                    self.declare(param.lexeme.as_str());
+                    self.define(param.lexeme.as_str());
+                }
+                for stmt in body {
+                    self.resolve(stmt).unwrap();
+                }
+                self.resolve_end();
+                Ok(())
+            }
+
             _ => panic!("Expected variable expression in resolve_expr"),
         }
     }
@@ -124,7 +171,7 @@ impl Resolver {
     fn resolve_local(&mut self, expr: &Expr, name: &Token) -> Result<(), String> {
         for (i, scope) in self.scopes.iter().enumerate().rev() {
             if scope.contains_key(name.lexeme.as_str()) {
-                // self.interpreter.resolve(name, i);
+                self.interpreter.resolve(name, i);
                 return Ok(());
             }
         }

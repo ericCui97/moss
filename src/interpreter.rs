@@ -1,4 +1,5 @@
 use crate::environment::Environment;
+use std::collections::HashMap;
 use crate::stmt::Stmt;
 use crate::expr::Expr;
 use crate::token::{
@@ -11,16 +12,22 @@ use std::time::SystemTime;
 pub struct Interpreter {
     pub special: Rc<RefCell<Environment>>,
     pub env: Rc<RefCell<Environment>>,
+    locals:HashMap<Expr,usize>
 }
 #[allow(clippy::ptr_arg)]
 fn clock_impl(_args: &Vec<LiteralValue>) -> LiteralValue {
     let now = std::time::SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
-        .expect("111")
+        .expect("Time went backwards")
         .as_millis();
     LiteralValue::NUMBER((now as f64) / 1000.0)
 }
-#[allow(clippy::new_without_default)]
+// #[allow(clippy::new_without_default)]
+impl Default for Interpreter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl Interpreter {
     pub fn new() -> Self {
         let mut env = Environment::new();
@@ -36,6 +43,7 @@ impl Interpreter {
         Self {
             special: Rc::new(RefCell::new(Environment::new())),
             env: Rc::new(RefCell::new(env)),
+            locals:HashMap::new()
         }
     }
     // make a new interpreter for closure
@@ -45,6 +53,7 @@ impl Interpreter {
         Self {
             special: Rc::new(RefCell::new(Environment::new())),
             env: environment,
+            locals:HashMap::new()
         }
     }
 
@@ -54,6 +63,7 @@ impl Interpreter {
         Self {
             special: Rc::new(RefCell::new(Environment::new())),
             env: Rc::new(RefCell::new(env)),
+            locals:HashMap::new()
         }
     }
 
@@ -168,5 +178,8 @@ impl Interpreter {
             }
         }
         Ok(())
+    }
+    pub fn resolve(&self,token:&Token,depth:usize){
+        todo!()
     }
 }
