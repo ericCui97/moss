@@ -1,0 +1,8 @@
+---test tc1
+for(var i=0;i<3;i=i+1){
+    print i;
+}
+---expect
+0
+1
+2

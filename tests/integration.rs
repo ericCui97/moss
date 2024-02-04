@@ -50,7 +50,7 @@ mod tests {
         assert_eq!(lines[6], "100");
     }
 
-        #[test]
+    #[test]
     fn test_fn_temp() {
         let lines = run_file_via_command("test_file/function/anon_fn.moss").unwrap();
     }
