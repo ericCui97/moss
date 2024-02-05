@@ -8,6 +8,7 @@ main.c
 chunk.c
 memory.c
 debug.c
+value.c
 )
 
 # 设置C标准
