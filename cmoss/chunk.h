@@ -12,7 +12,12 @@ typedef struct {
   int capacity;
   uint8_t *code;
 } Chunk;
-
+// init chunk
 void initChunk(Chunk *chunk);
+
+// write a byte into the chunk
 void writeChunk(Chunk *chunk,uint8_t byte);
+
+//  free the chunk
+void freeChunk(Chunk *chunk);
 #endif

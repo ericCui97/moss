@@ -1,6 +1,12 @@
+#include "chunk.h"
 #include "common.h"
+#include "memory.h"
 
 int main(int argc,char** argv){
-  printf("hello cmoss!\n");
+    Chunk chunk;
+    initChunk(&chunk);
+    writeChunk(&chunk,OP_RETURN);
+    freeChunk(&chunk);
+    printf("Hello, World!\n");
   return 0;
 }
