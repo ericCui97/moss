@@ -9,6 +9,7 @@ use std::time::SystemTime;
 pub struct Interpreter {
     pub special: Rc<RefCell<Environment>>,
     pub env: Rc<RefCell<Environment>>,
+    // for resolve
     locals: HashMap<Expr, usize>,
 }
 #[allow(clippy::ptr_arg)]
