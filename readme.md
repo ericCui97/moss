@@ -59,6 +59,10 @@ run test,both unit test and integration test.
 cargo test
 ```
 
+## cmoss
+cmoss is moss lang backend,written in c.
+[document](./cmoss/README.md)
+
 ### plan
 
 [ ] implement a backend of moss,based on byteCode,which is more efficient than ast.

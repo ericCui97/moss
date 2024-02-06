@@ -2,5 +2,6 @@
   "rust-analyzer.linkedProjects": [
     "./Cargo.toml",
     "./Cargo.toml"
-  ]
+  ],
+  "cmake.sourceDirectory": "/workspaces/moss/cmoss"
 }
