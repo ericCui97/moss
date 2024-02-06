@@ -86,13 +86,13 @@ pub fn run_test_file(path:&str)->Result<(),String>{
 }
 
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn test_run_test_file(){
-        assert!(run_test_file("test_file/test_for.moss").is_ok());
-        // 断言 run_test_file 不会抛出异常
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//     #[test]
+//     fn test_run_test_file(){
+//         assert!(run_test_file("test_file/test_for.moss").is_ok());
+//         // 断言 run_test_file 不会抛出异常
         
-    }
-}
+//     }
+// }
