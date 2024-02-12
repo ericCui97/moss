@@ -1,6 +1,6 @@
 # MOSS
 
-moss is a simple programming language written in rust. it's a personal project for learning rust and compiler.
+moss is a simple programming language written in rust and c. it's a personal project for learning rust and compiler.
 just for curiosity.
 
 ## guide
