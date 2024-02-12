@@ -12,6 +12,8 @@ value.c
 compiler.c
 scanner.c
 vm.c
+table.c
+object.c
 )
 
 # 设置C标准
