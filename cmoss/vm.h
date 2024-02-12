@@ -3,7 +3,6 @@
 #include "chunk.h"
 #include "value.h"
 #define STACK_MAX 256
-#define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 
 typedef struct {
     Chunk*   chunk;
