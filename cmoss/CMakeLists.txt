@@ -9,6 +9,8 @@ chunk.c
 memory.c
 debug.c
 value.c
+compiler.c
+scanner.c
 vm.c
 )
 
