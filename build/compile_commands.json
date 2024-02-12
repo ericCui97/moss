@@ -1,0 +1,62 @@
+[
+{
+  "directory": "/Users/cuiyirong/opensource/moss/build",
+  "command": "/usr/bin/clang   -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk -mmacosx-version-min=13.5 -o CMakeFiles/cmoss.dir/main.c.o -c /Users/cuiyirong/opensource/moss/cmoss/main.c",
+  "file": "/Users/cuiyirong/opensource/moss/cmoss/main.c",
+  "output": "CMakeFiles/cmoss.dir/main.c.o"
+},
+{
+  "directory": "/Users/cuiyirong/opensource/moss/build",
+  "command": "/usr/bin/clang   -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk -mmacosx-version-min=13.5 -o CMakeFiles/cmoss.dir/chunk.c.o -c /Users/cuiyirong/opensource/moss/cmoss/chunk.c",
+  "file": "/Users/cuiyirong/opensource/moss/cmoss/chunk.c",
+  "output": "CMakeFiles/cmoss.dir/chunk.c.o"
+},
+{
+  "directory": "/Users/cuiyirong/opensource/moss/build",
+  "command": "/usr/bin/clang   -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk -mmacosx-version-min=13.5 -o CMakeFiles/cmoss.dir/memory.c.o -c /Users/cuiyirong/opensource/moss/cmoss/memory.c",
+  "file": "/Users/cuiyirong/opensource/moss/cmoss/memory.c",
+  "output": "CMakeFiles/cmoss.dir/memory.c.o"
+},
+{
+  "directory": "/Users/cuiyirong/opensource/moss/build",
+  "command": "/usr/bin/clang   -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk -mmacosx-version-min=13.5 -o CMakeFiles/cmoss.dir/debug.c.o -c /Users/cuiyirong/opensource/moss/cmoss/debug.c",
+  "file": "/Users/cuiyirong/opensource/moss/cmoss/debug.c",
+  "output": "CMakeFiles/cmoss.dir/debug.c.o"
+},
+{
+  "directory": "/Users/cuiyirong/opensource/moss/build",
+  "command": "/usr/bin/clang   -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk -mmacosx-version-min=13.5 -o CMakeFiles/cmoss.dir/value.c.o -c /Users/cuiyirong/opensource/moss/cmoss/value.c",
+  "file": "/Users/cuiyirong/opensource/moss/cmoss/value.c",
+  "output": "CMakeFiles/cmoss.dir/value.c.o"
+},
+{
+  "directory": "/Users/cuiyirong/opensource/moss/build",
+  "command": "/usr/bin/clang   -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk -mmacosx-version-min=13.5 -o CMakeFiles/cmoss.dir/compiler.c.o -c /Users/cuiyirong/opensource/moss/cmoss/compiler.c",
+  "file": "/Users/cuiyirong/opensource/moss/cmoss/compiler.c",
+  "output": "CMakeFiles/cmoss.dir/compiler.c.o"
+},
+{
+  "directory": "/Users/cuiyirong/opensource/moss/build",
+  "command": "/usr/bin/clang   -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk -mmacosx-version-min=13.5 -o CMakeFiles/cmoss.dir/scanner.c.o -c /Users/cuiyirong/opensource/moss/cmoss/scanner.c",
+  "file": "/Users/cuiyirong/opensource/moss/cmoss/scanner.c",
+  "output": "CMakeFiles/cmoss.dir/scanner.c.o"
+},
+{
+  "directory": "/Users/cuiyirong/opensource/moss/build",
+  "command": "/usr/bin/clang   -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk -mmacosx-version-min=13.5 -o CMakeFiles/cmoss.dir/vm.c.o -c /Users/cuiyirong/opensource/moss/cmoss/vm.c",
+  "file": "/Users/cuiyirong/opensource/moss/cmoss/vm.c",
+  "output": "CMakeFiles/cmoss.dir/vm.c.o"
+},
+{
+  "directory": "/Users/cuiyirong/opensource/moss/build",
+  "command": "/usr/bin/clang   -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk -mmacosx-version-min=13.5 -o CMakeFiles/cmoss.dir/table.c.o -c /Users/cuiyirong/opensource/moss/cmoss/table.c",
+  "file": "/Users/cuiyirong/opensource/moss/cmoss/table.c",
+  "output": "CMakeFiles/cmoss.dir/table.c.o"
+},
+{
+  "directory": "/Users/cuiyirong/opensource/moss/build",
+  "command": "/usr/bin/clang   -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk -mmacosx-version-min=13.5 -o CMakeFiles/cmoss.dir/object.c.o -c /Users/cuiyirong/opensource/moss/cmoss/object.c",
+  "file": "/Users/cuiyirong/opensource/moss/cmoss/object.c",
+  "output": "CMakeFiles/cmoss.dir/object.c.o"
+}
+]
