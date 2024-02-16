@@ -6,6 +6,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::time::SystemTime;
+#[allow(dead_code)]
 pub struct Interpreter {
     pub special: Rc<RefCell<Environment>>,
     pub env: Rc<RefCell<Environment>>,

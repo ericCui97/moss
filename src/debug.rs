@@ -1,4 +1,4 @@
-use crate::token::Token;
+use crate::{token::Token, expr::Expr};
 
 
 trait DebugString{
@@ -9,4 +9,8 @@ impl DebugString for Token {
     fn debug_string(&self) -> String {
         format!("{:?} {}", self.token_type, self.lexeme)
     }
+}
+
+impl DebugString for Expr{
+    
 }
