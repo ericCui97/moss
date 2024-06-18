@@ -1,11 +1,11 @@
 // --- Test
 
-fun cmd <- "grep result tests/cases/echo_cmd.jlox";
+fun cmd <- "grep result ./src/tests/cases/echo_cmd.moss";
 
 var result = cmd();
 print result;
 
 // --- Expected
-// var result = cmd();
+// "var result = cmd();
 // print result;
-// 
+// "

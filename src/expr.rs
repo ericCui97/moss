@@ -117,6 +117,7 @@ macro_rules! class_name {
 }
 
 impl LiteralValue {
+    #[allow(clippy::inherent_to_string)]
     pub fn to_string(&self) -> String {
         match self {
             LiteralValue::Number(x) => x.to_string(),
@@ -392,6 +393,7 @@ impl Expr {
 
 impl Expr {
     #[allow(dead_code)]
+    #[allow(clippy::inherent_to_string)]
     pub fn to_string(&self) -> String {
         match self {
             Expr::AnonFunction {

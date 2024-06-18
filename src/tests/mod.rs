@@ -1,11 +1,12 @@
 #[cfg(test)]
+#[allow(clippy::module_inception)]
 mod tests {
     use std::fs::{read_dir, read_to_string, DirEntry};
     use std::process::Command;
 
     #[test]
     fn execute_tests() {
-        let cases = read_dir("/home/codescope/projects/cii/src/tests/cases").unwrap();
+        let cases = read_dir("/Users/cuiyirong/opensource/moss/src/tests/cases").unwrap();
 
         let mut errors = vec![];
         let mut msgs = vec![];
