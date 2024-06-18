@@ -6,7 +6,7 @@ mod tests {
 
     #[test]
     fn execute_tests() {
-        let cases = read_dir("/Users/cuiyirong/opensource/moss/src/tests/cases").unwrap();
+        let cases = read_dir("./src/tests/cases").unwrap();
 
         let mut errors = vec![];
         let mut msgs = vec![];
