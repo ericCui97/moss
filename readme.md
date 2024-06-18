@@ -86,10 +86,11 @@ cmoss is moss lang backend,written in c.
 - [ ] array expression
 - [ ] object expression
 - [ ] scoping and scop resolve
+- [x] class statement
 
 ### bug
 
-- [ ] blank string parse
+- [x] blank string parse
 
 ### refact
 
