@@ -1,0 +1,26 @@
+// --- Test
+fun make_counter() {
+  var i = 0;
+  fun count() {
+    i = i + 1;
+    print i;
+  }
+
+  return count;
+}
+
+var counter1 = make_counter();
+var counter2 = make_counter();
+
+counter1();
+counter1();
+
+counter2();
+counter2();
+
+
+// --- Expected
+// 1
+// 2
+// 1
+// 2

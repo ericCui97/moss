@@ -1,0 +1,14 @@
+// --- Test
+class Greeter {
+    greet() {
+        print "Hello, " + this.name;
+    }
+}
+
+var g = Greeter();
+g.name = "Steve";
+
+g.greet();
+
+// --- Expected
+// "Hello, Steve"

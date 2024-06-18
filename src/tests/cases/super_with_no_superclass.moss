@@ -1,0 +1,14 @@
+// --- Test
+
+class Bagel {
+    will_fail() {
+        super.fail();
+    }
+}
+
+var b = Bagel();
+b.will_fail();
+
+// --- Expected
+// ERROR:
+// Class has no superclass 

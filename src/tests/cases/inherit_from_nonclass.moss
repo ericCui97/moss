@@ -1,0 +1,10 @@
+// --- Test
+
+var a = "this is not a class";
+
+class Bagel < a {}
+
+
+// --- Expected
+// ERROR:
+// Superclass must be a class, not String 

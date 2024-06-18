@@ -1,0 +1,20 @@
+// --- Test
+var a = 1;
+{
+  fun mod() {
+    a = 2;
+  }
+
+  var a = 10;
+
+
+  mod();
+
+  print a;
+}
+
+print a;
+
+// --- Expected
+// 10
+// 2

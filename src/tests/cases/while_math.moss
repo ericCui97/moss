@@ -1,0 +1,20 @@
+// --- Test
+var times = 10;
+var product = 1;
+while (times) {
+  product = product * times;
+  times = times - 1;
+  print product;
+}
+
+// --- Expected
+// 10
+// 90     
+// 720    
+// 5040   
+// 30240  
+// 151200 
+// 604800 
+// 1814400
+// 3628800
+// 3628800

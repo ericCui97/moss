@@ -1,0 +1,23 @@
+// --- Test
+class Animal {
+    init() {
+        this.name = "Animal";
+    }
+
+    speak() {
+        print this.name;
+    }
+}
+
+class Cat < Animal {
+    init() {
+        super.init();
+    }
+}
+
+var cat = Cat();
+cat.speak();
+
+
+// --- Expected
+// "Animal"

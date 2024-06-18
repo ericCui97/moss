@@ -1,0 +1,11 @@
+// --- Test
+class DevonshireCream {
+  serveOn() {
+    return "Scones";
+  }
+}
+
+print DevonshireCream;
+
+// --- Expected
+// Class 'DevonshireCream'

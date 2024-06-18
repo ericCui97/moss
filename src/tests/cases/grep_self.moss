@@ -1,0 +1,11 @@
+// --- Test
+
+fun cmd <- "grep result tests/cases/echo_cmd.jlox";
+
+var result = cmd();
+print result;
+
+// --- Expected
+// var result = cmd();
+// print result;
+// 

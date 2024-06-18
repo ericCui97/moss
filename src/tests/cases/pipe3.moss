@@ -1,0 +1,17 @@
+// --- Test
+fun add1(a) {
+    return a + 1;
+}
+
+fun add2(a) {
+    return a + 1;
+}
+
+var b = 1 |> add1 |> fun (a) { return a + 2; };
+
+
+print b;
+
+
+// --- Expected
+// 4

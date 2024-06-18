@@ -1,0 +1,13 @@
+// --- Test
+class Bagel {
+    init(a, b) {
+        this.a = a;
+        this.b = b;
+    }
+}
+
+var b = Bagel(2, 3);
+print b.a + b.b;
+
+// --- Expected
+// 5

@@ -1,0 +1,9 @@
+// --- Test
+class Bagel {}
+var b = Bagel();
+b.fn = fun (a) { return a + 2; };
+var result = b.fn(2);
+print result;
+
+// --- Expected
+// 4
