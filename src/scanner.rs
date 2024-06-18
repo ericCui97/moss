@@ -1,145 +1,151 @@
-use lazy_static::lazy_static;
 use std::collections::HashMap;
-use crate::token::{LiteralValue, Token};
+use std::string::String;
 
-use crate::token::TokenType;
-
-lazy_static! {
-    static ref KEYWORDS: HashMap<&'static str, TokenType> = {
-        [
-            ("and", TokenType::AND),
-            ("class", TokenType::CLASS),
-            ("else", TokenType::ELSE),
-            ("false", TokenType::FALSE),
-            ("fun", TokenType::FUN),
-            ("for", TokenType::FOR),
-            ("if", TokenType::IF),
-            ("nil", TokenType::NIL),
-            ("or", TokenType::OR),
-            ("print", TokenType::PRINT),
-            ("return", TokenType::RETURN),
-            ("super", TokenType::SUPER),
-            ("this", TokenType::THIS),
-            ("true", TokenType::TRUE),
-            ("var", TokenType::VAR),
-            ("while", TokenType::WHILE),
-            // 添加其他映射关系...
-        ]
-        .iter()
-        .cloned()
-        .collect()
-    };
+fn is_digit(ch: char) -> bool {
+    ch as u8 >= '0' as u8 && ch as u8 <= '9' as u8
 }
 
-#[warn(non_camel_case_types)]
-#[derive(Clone)]
-pub struct Scanner<'a> {
-    source: &'a str,
+fn is_alpha(ch: char) -> bool {
+    let uch = ch as u8;
+    (uch >= 'a' as u8 && uch <= 'z' as u8) || (uch >= 'A' as u8 && uch <= 'Z' as u8) || (ch == '_')
+}
+
+fn is_alpha_numeric(ch: char) -> bool {
+    is_alpha(ch) || is_digit(ch)
+}
+
+fn get_keywords_hashmap() -> HashMap<&'static str, TokenType> {
+    HashMap::from([
+        ("and", And),
+        ("class", Class),
+        ("else", Else),
+        ("false", False),
+        ("for", For),
+        ("fun", Fun),
+        ("if", If),
+        ("nil", Nil),
+        ("or", Or),
+        ("print", Print),
+        ("return", Return),
+        ("super", Super),
+        ("this", This),
+        ("true", True),
+        ("var", Var),
+        ("while", While),
+    ])
+}
+
+pub struct Scanner {
+    source: String,
     tokens: Vec<Token>,
-    start: u64,
-    current: u64,
+    start: usize,
+    current: usize,
     line: usize,
+
+    keywords: HashMap<&'static str, TokenType>,
 }
 
-impl<'a> Scanner<'a> {
-    pub fn new(_source: &'a str) -> Self {
+impl Scanner {
+    pub fn new(source: &str) -> Self {
         Self {
-            source: _source,
-            tokens: Vec::new(),
+            source: source.to_string(),
+            tokens: vec![],
             start: 0,
             current: 0,
             line: 1,
+            keywords: get_keywords_hashmap(),
         }
     }
 
-    pub fn scan_tokens(&mut self) -> Result<Vec<Token>, String> {
-        let mut errs: Vec<String> = vec![];
+    pub fn scan_tokens(self: &mut Self) -> Result<Vec<Token>, String> {
+        let mut errors = vec![];
         while !self.is_at_end() {
             self.start = self.current;
-            // self.clone().scan_token().unwrap();
             match self.scan_token() {
                 Ok(_) => (),
-                Err(e) => errs.push(e),
+                Err(msg) => errors.push(msg),
             }
         }
+
         self.tokens.push(Token {
-            token_type: TokenType::EOF,
-            lexeme: String::from(""),
+            token_type: Eof,
+            lexeme: "".to_string(),
             literal: None,
             line_number: self.line,
         });
-        if !errs.is_empty() {
-            return Err(errs.join("\n"));
+
+        if errors.len() > 0 {
+            let mut joined = "".to_string();
+            for error in errors {
+                joined.push_str(&error);
+                joined.push_str("\n");
+            }
+            return Err(joined);
         }
+
         Ok(self.tokens.clone())
     }
-    pub fn scan_token(&mut self) -> Result<(), String> {
+
+    // var test = 0.01;
+
+    fn is_at_end(self: &Self) -> bool {
+        self.current >= self.source.len()
+    }
+
+    fn scan_token(self: &mut Self) -> Result<(), String> {
         let c = self.advance();
-        // dbg!("scan_token", c);
+
         match c {
-            '(' => {
-                self.add_token(TokenType::LEFT_PAREN);
-                Ok(())
-            }
-            ')' => {
-                self.add_token(TokenType::RIGHT_PAREN);
-                Ok(())
-            }
-            '{' => {
-                self.add_token(TokenType::LEFT_BRACE);
-                Ok(())
-            }
-            '}' => {
-                self.add_token(TokenType::RIGHT_BRACE);
-                Ok(())
-            }
-            ',' => {
-                self.add_token(TokenType::COMMA);
-                Ok(())
-            }
-            '.' => {
-                self.add_token(TokenType::DOT);
-                Ok(())
-            }
-            '-' => {
-                self.add_token(TokenType::MINUS);
-                Ok(())
-            }
-            '+' => {
-                self.add_token(TokenType::PLUS);
-                Ok(())
-            }
-            ';' => {
-                self.add_token(TokenType::SEMICOLON);
-                Ok(())
-            }
-            '*' => {
-                self.add_token(TokenType::STAR);
-                Ok(())
-            }
-            // '/' => {
-            //     loop {
-            //         if self.is_at_end() || self.peek() == '\n' {
-            //             self.line += 1;
-            //             break;
-            //         }
-            //         self.advance();
-            //     }
-            //     Ok(())
-            // }
-            ' ' | '\r' | '\t' => Ok(()),
+            '(' => self.add_token(LeftParen),
+            ')' => self.add_token(RightParen),
+            '{' => self.add_token(LeftBrace),
+            '}' => self.add_token(RightBrace),
+            ',' => self.add_token(Comma),
+            '.' => self.add_token(Dot),
+            '-' => self.add_token(Minus),
+            '+' => self.add_token(Plus),
+            ';' => self.add_token(Semicolon),
+            '*' => self.add_token(Star),
             '!' => {
-                if self.match_char('=') {
-                    self.add_token(TokenType::BANG_EQUAL);
-                    Ok(())
+                let token = if self.char_match('=') {
+                    // !=
+                    BangEqual
                 } else {
-                    self.add_token(TokenType::BANG);
-                    Ok(())
-                }
+                    Bang
+                };
+                self.add_token(token);
             }
-            // comments 注释
+            '=' => {
+                let token = if self.char_match('=') {
+                    EqualEqual
+                } else {
+                    Equal
+                };
+
+                self.add_token(token);
+            }
+            '<' => {
+                let token = if self.char_match('=') {
+                    LessEqual
+                } else if self.char_match('-') {
+                    Gets
+                } else {
+                    Less
+                };
+
+                self.add_token(token);
+            }
+            '>' => {
+                let token = if self.char_match('=') {
+                    GreaterEqual
+                } else {
+                    Greater
+                };
+
+                self.add_token(token);
+            }
             '/' => {
-                if self.match_char('/') {
+                if self.char_match('/') {
                     loop {
                         if self.peek() == '\n' || self.is_at_end() {
                             break;
@@ -147,187 +153,220 @@ impl<'a> Scanner<'a> {
                         self.advance();
                     }
                 } else {
-                    self.add_token(TokenType::SLASH)
+                    self.add_token(Slash);
                 }
-                Ok(())
-            }
-            '\n' => {
-                self.line += 1;
-                Ok(())
-            }
-            '=' => {
-                if self.match_char('=') {
-                    self.add_token(TokenType::EQUAL_EQUAL);
-                    Ok(())
+            },
+            '|' => {
+                if self.char_match('>') {
+                    self.add_token(Pipe);
                 } else {
-                    self.add_token(TokenType::EQUAL);
-                    Ok(())
+                    return Err(format!("Expected '>' at line {}", self.line));
                 }
-            }
-            '<' => {
-                if self.match_char('=') {
-                    self.add_token(TokenType::LESS_EQUAL);
-                    Ok(())
-                } else {
-                    self.add_token(TokenType::LESS);
-                    Ok(())
-                }
-            }
-            '>' => {
-                if self.match_char('=') {
-                    self.add_token(TokenType::GREATER_EQUAL);
-                    Ok(())
-                } else {
-                    self.add_token(TokenType::GREATER);
-                    Ok(())
-                }
-            }
-            '"' => self.string(),
+            },
+            ' ' | '\r' | '\t' => {}
+            '\n' => self.line += 1,
+            '"' => self.string()?,
+
             c => {
                 if is_digit(c) {
-                    self.number()
+                    self.number()?;
                 } else if is_alpha(c) {
-                    self.identifier()
+                    self.identifier();
                 } else {
-                    Err(format!("Unexpected character: {}", c))
+                    return Err(format!("Unrecognized char at line {}: {}", self.line, c));
                 }
             }
         }
+
+        Ok(())
     }
 
-    fn peek(&self) -> char {
-        if self.is_at_end() {
+    fn identifier(&mut self) {
+        while is_alpha_numeric(self.peek()) {
+            self.advance();
+        }
+
+        let substring = &self.source[self.start..self.current];
+        if let Some(&t_type) = self.keywords.get(substring) {
+            self.add_token(t_type);
+        } else {
+            self.add_token(Identifier);
+        }
+    }
+
+    fn number(self: &mut Self) -> Result<(), String> {
+        while is_digit(self.peek()) {
+            self.advance();
+        }
+
+        if self.peek() == '.' && is_digit(self.peek_next()) {
+            self.advance();
+
+            while is_digit(self.peek()) {
+                self.advance();
+            }
+        }
+        let substring = &self.source[self.start..self.current];
+        let value = substring.parse::<f64>();
+        match value {
+            Ok(value) => self.add_token_lit(Number, Some(FValue(value))),
+            Err(_) => return Err(format!("Could not parse number: {}", substring)),
+        }
+
+        Ok(())
+    }
+
+    fn peek_next(self: &Self) -> char {
+        if self.current + 1 >= self.source.len() {
             return '\0';
         }
-        self.source.chars().nth(self.current as usize).unwrap()
+
+        self.source.chars().nth(self.current + 1).unwrap()
     }
 
-    fn is_at_end(&self) -> bool {
-        self.current >= self.source.len() as u64
-    }
-    fn match_char(&mut self, c: char) -> bool {
-        if self.is_at_end() {
-            return false;
-        }
-        if self.source.chars().nth(self.current as usize).unwrap() != c {
-            return false;
-        }
-        self.current += 1;
-        true
-    }
-    fn advance(&mut self) -> char {
-        let c = self.source.chars().nth(self.current as usize).unwrap();
-        self.current += 1;
-        c
-    }
-    fn add_token(&mut self, token_type: TokenType) {
-        self.add_token_lit(token_type, None);
-    }
-    fn add_token_lit(&mut self, token_type: TokenType, literal: Option<LiteralValue>) {
-        let text: String = String::from_utf8_lossy(
-            &self.source.as_bytes()[self.start as usize..self.current as usize],
-        )
-        .to_string();
-        self.tokens
-            .push(Token::new(token_type, text, literal, self.line));
-    }
-    fn string(&mut self) -> Result<(), String> {
+    fn string(self: &mut Self) -> Result<(), String> {
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
                 self.line += 1;
             }
             self.advance();
         }
-        // empty string
-        // if self.peek() == '"' {
-        //     dbg!("empty string");
-        //     self.advance();
-        //     self.add_token_lit(
-        //         TokenType::STRING,
-        //         Some(LiteralValue::STRING("".to_string())),
-        //     );
-        //     return Ok(());
-        // }
+
         if self.is_at_end() {
-            return Err("undeterminded string".to_string());
+            return Err("Unterminated string".to_string());
         }
+
         self.advance();
-        //		let value = self.source.as_bytes()[self.start+1..self.current];
-        let value = String::from_utf8_lossy(
-            &self.source.as_bytes()[self.start as usize + 1..self.current as usize - 1],
-        );
-        self.add_token_lit(
-            TokenType::STRING,
-            Some(LiteralValue::STRING(value.to_string())),
-        );
-        Ok(())
-    }
 
-    fn number(&mut self) -> Result<(), String> {
-        while is_digit(self.peek()) {
-            self.advance();
-        }
-        while self.peek() == '.' && is_digit(self.peek_next()) {
-            self.advance();
-            while is_digit(self.peek()) {
-                self.advance();
-            }
-        }
-        let sub_string = String::from_utf8_lossy(
-            &self.source.as_bytes()[self.start as usize..self.current as usize],
-        );
-        match sub_string.parse::<f64>() {
-            Ok(v) => {
-                self.add_token_lit(TokenType::NUMBER, Some(LiteralValue::NUMBER(v)));
-                Ok(())
-            }
-            Err(e) => Err(format!("parse number error: {}", e)),
-        }
-    }
-    fn identifier(&mut self) -> Result<(), String> {
-        while is_alpha_numeric(self.peek()) {
-            self.advance();
-        }
-        let sub_string = String::from_utf8_lossy(
-            &self.source.as_bytes()[self.start as usize..self.current as usize],
-        );
-        let mut token_type = TokenType::IDENTIFIER;
-        // match KEYWORDS.get(sub_string.as_ref()) {
-        //     Some(keyword_type) => token_type = *keyword_type,
-        //     None => (),
-        // }
-        if let Some(keyword_type) = KEYWORDS.get(sub_string.as_ref()) {
-            token_type = *keyword_type
-        }
-        self.add_token(token_type);
+        let value = &self.source[self.start + 1..self.current - 1];
+
+        self.add_token_lit(StringLit, Some(StringValue(value.to_string())));
 
         Ok(())
     }
-    fn peek_next(&self) -> char {
-        if self.current + 1 >= self.source.len() as u64 {
+
+    fn peek(self: &Self) -> char {
+        if self.is_at_end() {
             return '\0';
         }
-        self.source
-            .chars()
-            .nth((self.current + 1) as usize)
-            .unwrap()
+        self.source.chars().nth(self.current).unwrap()
+    }
+
+    fn char_match(self: &mut Self, ch: char) -> bool {
+        if self.is_at_end() {
+            return false;
+        }
+        if self.source.chars().nth(self.current).unwrap() != ch {
+            return false;
+        } else {
+            self.current += 1;
+            return true;
+        }
+    }
+
+    fn advance(self: &mut Self) -> char {
+        let c = self.source.chars().nth(self.current).unwrap();
+        self.current += 1;
+
+        c
+    }
+
+    fn add_token(self: &mut Self, token_type: TokenType) {
+        self.add_token_lit(token_type, None);
+    }
+
+    fn add_token_lit(self: &mut Self, token_type: TokenType, literal: Option<LiteralValue>) {
+        let text = self.source[self.start..self.current].to_string();
+
+        self.tokens.push(Token {
+            token_type: token_type,
+            lexeme: text,
+            literal: literal,
+            line_number: self.line,
+        });
     }
 }
 
-fn is_digit(c: char) -> bool {
-    c.is_ascii_digit()
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum TokenType {
+    // Single-char tokens
+    LeftParen,
+    RightParen,
+    LeftBrace,
+    RightBrace,
+    Comma,
+    Dot,
+    Minus,
+    Plus,
+    Semicolon,
+    Slash,
+    Star,
+
+    // One Or Two Chars
+    Bang,
+    BangEqual,
+    Equal,
+    EqualEqual,
+    Greater,
+    GreaterEqual,
+    Less,
+    LessEqual,
+    Pipe, // |>
+    Gets, // <-
+
+    // Literals
+    Identifier,
+    StringLit,
+    Number,
+
+    // Keywords
+    And,
+    Class,
+    Else,
+    False,
+    Fun,
+    For,
+    If,
+    Nil,
+    Or,
+    Print,
+    Return,
+    Super,
+    This,
+    True,
+    Var,
+    While,
+
+    Eof,
+}
+use TokenType::*;
+
+impl std::fmt::Display for TokenType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
-fn is_alpha(c: char) -> bool {
-    c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == '_'
+#[derive(Debug, Clone)]
+pub enum LiteralValue {
+    FValue(f64),
+    StringValue(String),
+}
+use LiteralValue::*;
+
+#[derive(Debug, Clone)]
+pub struct Token {
+    pub token_type: TokenType,
+    pub lexeme: String,
+    pub literal: Option<LiteralValue>,
+    pub line_number: usize,
 }
 
-fn is_alpha_numeric(c: char) -> bool {
-    is_alpha(c) || is_digit(c)
+impl Token {
+    pub fn to_string(self: &Self) -> String {
+        format!("{} {} {:?}", self.token_type, self.lexeme, self.literal)
+    }
 }
-
-/*-----------------test-----------------*/
-// use moss::scanner::Scanner;
 
 #[cfg(test)]
 mod tests {
@@ -335,145 +374,146 @@ mod tests {
 
     #[test]
     fn handle_one_char_tokens() {
-        let mut scanner = Scanner::new("(){};+-*");
-        let tokens = scanner.scan_tokens().unwrap();
-        assert_eq!(tokens.len(), 9);
-        assert_eq!(tokens[0].token_type, TokenType::LEFT_PAREN);
-        assert_eq!(tokens[1].token_type, TokenType::RIGHT_PAREN);
-        assert_eq!(tokens[2].token_type, TokenType::LEFT_BRACE);
-        assert_eq!(tokens[3].token_type, TokenType::RIGHT_BRACE);
-        assert_eq!(tokens[4].token_type, TokenType::SEMICOLON);
-        assert_eq!(tokens[5].token_type, TokenType::PLUS);
-        assert_eq!(tokens[6].token_type, TokenType::MINUS);
-        assert_eq!(tokens[7].token_type, TokenType::STAR);
-        assert_eq!(tokens[8].token_type, TokenType::EOF);
+        let source = "(( )) }{";
+        let mut scanner = Scanner::new(source);
+        scanner.scan_tokens().unwrap();
+
+        assert_eq!(scanner.tokens.len(), 7);
+        assert_eq!(scanner.tokens[0].token_type, LeftParen);
+        assert_eq!(scanner.tokens[1].token_type, LeftParen);
+        assert_eq!(scanner.tokens[2].token_type, RightParen);
+        assert_eq!(scanner.tokens[3].token_type, RightParen);
+        assert_eq!(scanner.tokens[4].token_type, RightBrace);
+        assert_eq!(scanner.tokens[5].token_type, LeftBrace);
+        assert_eq!(scanner.tokens[6].token_type, Eof);
     }
+
     #[test]
-    fn test1() {
-        let mut scanner = Scanner::new("(( ))");
-        let tokens = scanner.scan_tokens().unwrap();
-        assert_eq!(tokens.len(), 5);
-        assert_eq!(tokens[0].token_type, TokenType::LEFT_PAREN);
-        assert_eq!(tokens[1].token_type, TokenType::LEFT_PAREN);
-        assert_eq!(tokens[2].token_type, TokenType::RIGHT_PAREN);
-        assert_eq!(tokens[3].token_type, TokenType::RIGHT_PAREN);
-        assert_eq!(tokens[4].token_type, TokenType::EOF);
+    fn handle_two_char_tokens() {
+        let source = "! != == >=";
+        let mut scanner = Scanner::new(source);
+        scanner.scan_tokens().unwrap();
+
+        assert_eq!(scanner.tokens.len(), 5);
+        assert_eq!(scanner.tokens[0].token_type, Bang);
+        assert_eq!(scanner.tokens[1].token_type, BangEqual);
+        assert_eq!(scanner.tokens[2].token_type, EqualEqual);
+        assert_eq!(scanner.tokens[3].token_type, GreaterEqual);
+        assert_eq!(scanner.tokens[4].token_type, Eof);
     }
+
     #[test]
-    fn test2char() {
-        let mut scanner = Scanner::new("!= == <= >= ");
-        let tokens = scanner.scan_tokens().unwrap();
-        assert_eq!(tokens.len(), 5);
-        assert_eq!(tokens[0].token_type, TokenType::BANG_EQUAL);
-        assert_eq!(tokens[1].token_type, TokenType::EQUAL_EQUAL);
-        assert_eq!(tokens[2].token_type, TokenType::LESS_EQUAL);
-        assert_eq!(tokens[3].token_type, TokenType::GREATER_EQUAL);
-        assert_eq!(tokens[4].token_type, TokenType::EOF);
-    }
-    #[test]
-    fn test_string() {
-        let mut scanner = Scanner::new("\"hello world\"");
-        let tokens = scanner.scan_tokens().unwrap();
-        assert_eq!(tokens.len(), 2);
-        assert_eq!(tokens[0].token_type, TokenType::STRING);
-        assert_eq!(tokens[0].lexeme, "\"hello world\"");
-        assert_eq!(tokens[1].token_type, TokenType::EOF);
-    }
-    #[test]
-    fn test_string_err() {
-        let mut scanner = Scanner::new("\"hello world");
-        let tokens = scanner.scan_tokens();
-        assert!(tokens.is_err());
-    }
-    #[test]
-    fn test_string2() {
-        let mut scanner = Scanner::new(r#""hello world""#);
-        let tokens = scanner.scan_tokens().unwrap();
-        assert_eq!(tokens.len(), 2);
-        assert_eq!(tokens[0].token_type, TokenType::STRING);
-        assert_eq!(tokens[0].lexeme, "\"hello world\"");
-        assert_eq!(tokens[1].token_type, TokenType::EOF);
-        match tokens[0].literal.as_ref().unwrap() {
-            LiteralValue::STRING(s) => assert_eq!(s, "hello world"),
-            _ => panic!("literal is not string"),
-        }
-    }
-    #[test]
-    fn test_number() {
-        let mut scanner = Scanner::new("123 123.456 0.1");
-        let tokens = scanner.scan_tokens().unwrap();
-        assert_eq!(tokens[0].token_type, TokenType::NUMBER);
-        assert_eq!(tokens[0].lexeme, "123");
-        assert_eq!(tokens[1].token_type, TokenType::NUMBER);
-        assert_eq!(tokens[1].lexeme, "123.456");
-        assert_eq!(tokens[2].token_type, TokenType::NUMBER);
-        assert_eq!(tokens[2].lexeme, "0.1");
-        assert_eq!(tokens[3].token_type, TokenType::EOF);
-        match tokens[0].literal.as_ref().unwrap() {
-            LiteralValue::NUMBER(n) => assert_eq!(*n, 123.0),
-            _ => panic!("literal is not number"),
+    fn handle_string_lit() {
+        let source = r#""ABC""#;
+        let mut scanner = Scanner::new(source);
+        scanner.scan_tokens().unwrap();
+        assert_eq!(scanner.tokens.len(), 2);
+        assert_eq!(scanner.tokens[0].token_type, StringLit);
+        match scanner.tokens[0].literal.as_ref().unwrap() {
+            StringValue(val) => assert_eq!(val, "ABC"),
+            _ => panic!("Incorrect literal type"),
         }
     }
 
     #[test]
-    fn test_identifier() {
-        let mut scanner = Scanner::new(r#"var_a = "hello world";"#);
-        let tokens = scanner.scan_tokens().unwrap();
-        assert_eq!(tokens[0].token_type, TokenType::IDENTIFIER);
-        assert_eq!(tokens[0].lexeme, "var_a");
-        assert_eq!(tokens[1].token_type, TokenType::EQUAL);
-        assert_eq!(tokens[2].token_type, TokenType::STRING);
-        assert_eq!(tokens[2].lexeme, "\"hello world\"");
-        assert_eq!(tokens[3].token_type, TokenType::SEMICOLON);
-        assert_eq!(tokens[4].token_type, TokenType::EOF);
+    fn handle_string_lit_unterminated() {
+        let source = r#""ABC"#;
+        let mut scanner = Scanner::new(source);
+        let result = scanner.scan_tokens();
+        match result {
+            Err(_) => (),
+            _ => panic!("Should have failed"),
+        }
     }
+
     #[test]
-    fn test_identifier_hold() {
-        let mut scanner = Scanner::new(
-            r#"
-        var a = 1 if(a==1) or nil return
-        "#,
-        );
-        let tokens = scanner.scan_tokens().unwrap();
-        assert_eq!(tokens[0].token_type, TokenType::VAR);
-        assert_eq!(tokens[1].token_type, TokenType::IDENTIFIER);
-        assert_eq!(tokens[2].token_type, TokenType::EQUAL);
-        assert_eq!(tokens[3].token_type, TokenType::NUMBER);
-        assert_eq!(tokens[4].token_type, TokenType::IF);
-        assert_eq!(tokens[5].token_type, TokenType::LEFT_PAREN);
-        assert_eq!(tokens[6].token_type, TokenType::IDENTIFIER);
-        assert_eq!(tokens[7].token_type, TokenType::EQUAL_EQUAL);
-        assert_eq!(tokens[8].token_type, TokenType::NUMBER);
-        assert_eq!(tokens[9].token_type, TokenType::RIGHT_PAREN);
-        assert_eq!(tokens[10].token_type, TokenType::OR);
-        assert_eq!(tokens[11].token_type, TokenType::NIL);
-        assert_eq!(tokens[12].token_type, TokenType::RETURN);
-        assert_eq!(tokens[13].token_type, TokenType::EOF);
+    fn handle_string_lit_multiline() {
+        let source = "\"ABC\ndef\"";
+        let mut scanner = Scanner::new(source);
+        scanner.scan_tokens().unwrap();
+        assert_eq!(scanner.tokens.len(), 2);
+        assert_eq!(scanner.tokens[0].token_type, StringLit);
+        match scanner.tokens[0].literal.as_ref().unwrap() {
+            StringValue(val) => assert_eq!(val, "ABC\ndef"),
+            _ => panic!("Incorrect literal type"),
+        }
     }
+
     #[test]
-    fn test_all_keywords() {
-        let mut scanner = Scanner::new(
-            r#"
-        and class else false fun for if nil or print return super this true var while
-        "#,
-        );
-        let tokens = scanner.scan_tokens().unwrap();
-        assert_eq!(tokens[0].token_type, TokenType::AND);
-        assert_eq!(tokens[1].token_type, TokenType::CLASS);
-        assert_eq!(tokens[2].token_type, TokenType::ELSE);
-        assert_eq!(tokens[3].token_type, TokenType::FALSE);
-        assert_eq!(tokens[4].token_type, TokenType::FUN);
-        assert_eq!(tokens[5].token_type, TokenType::FOR);
-        assert_eq!(tokens[6].token_type, TokenType::IF);
-        assert_eq!(tokens[7].token_type, TokenType::NIL);
-        assert_eq!(tokens[8].token_type, TokenType::OR);
-        assert_eq!(tokens[9].token_type, TokenType::PRINT);
-        assert_eq!(tokens[10].token_type, TokenType::RETURN);
-        assert_eq!(tokens[11].token_type, TokenType::SUPER);
-        assert_eq!(tokens[12].token_type, TokenType::THIS);
-        assert_eq!(tokens[13].token_type, TokenType::TRUE);
-        assert_eq!(tokens[14].token_type, TokenType::VAR);
-        assert_eq!(tokens[15].token_type, TokenType::WHILE);
-        assert_eq!(tokens[16].token_type, TokenType::EOF);
+    fn number_literals() {
+        let source = "123.123\n321.0\n5";
+        let mut scanner = Scanner::new(source);
+        scanner.scan_tokens().unwrap();
+
+        assert_eq!(scanner.tokens.len(), 4);
+        for i in 0..3 {
+            assert_eq!(scanner.tokens[i].token_type, Number);
+        }
+        match scanner.tokens[0].literal {
+            Some(FValue(val)) => assert_eq!(val, 123.123),
+            _ => panic!("Incorrect literal type"),
+        }
+        match scanner.tokens[1].literal {
+            Some(FValue(val)) => assert_eq!(val, 321.0),
+            _ => panic!("Incorrect literal type"),
+        }
+        match scanner.tokens[2].literal {
+            Some(FValue(val)) => assert_eq!(val, 5.0),
+            _ => panic!("Incorrect literal type"),
+        }
+    }
+
+    #[test]
+    fn get_identifer() {
+        let source = "this_is_a_var = 12;";
+        let mut scanner = Scanner::new(source);
+        scanner.scan_tokens().unwrap();
+
+        assert_eq!(scanner.tokens.len(), 5);
+
+        assert_eq!(scanner.tokens[0].token_type, Identifier);
+        assert_eq!(scanner.tokens[1].token_type, Equal);
+        assert_eq!(scanner.tokens[2].token_type, Number);
+        assert_eq!(scanner.tokens[3].token_type, Semicolon);
+        assert_eq!(scanner.tokens[4].token_type, Eof);
+    }
+
+    #[test]
+    fn get_keywords() {
+        let source = "var this_is_a_var = 12;\nwhile true { print 3 };";
+        let mut scanner = Scanner::new(source);
+        scanner.scan_tokens().unwrap();
+
+        assert_eq!(scanner.tokens.len(), 13);
+
+        assert_eq!(scanner.tokens[0].token_type, Var);
+        assert_eq!(scanner.tokens[1].token_type, Identifier);
+        assert_eq!(scanner.tokens[2].token_type, Equal);
+        assert_eq!(scanner.tokens[3].token_type, Number);
+        assert_eq!(scanner.tokens[4].token_type, Semicolon);
+        assert_eq!(scanner.tokens[5].token_type, While);
+        assert_eq!(scanner.tokens[6].token_type, True);
+        assert_eq!(scanner.tokens[7].token_type, LeftBrace);
+        assert_eq!(scanner.tokens[8].token_type, Print);
+        assert_eq!(scanner.tokens[9].token_type, Number);
+        assert_eq!(scanner.tokens[10].token_type, RightBrace);
+        assert_eq!(scanner.tokens[11].token_type, Semicolon);
+        assert_eq!(scanner.tokens[12].token_type, Eof);
+    }
+
+    #[test]
+    fn gets_keyword() {
+        let source = "fun cmd <- \"echo hello\";";
+        let mut scanner = Scanner::new(source);
+        scanner.scan_tokens().unwrap();
+
+        assert_eq!(scanner.tokens.len(), 6);
+
+        assert_eq!(scanner.tokens[0].token_type, Fun);
+        assert_eq!(scanner.tokens[1].token_type, Identifier);
+        assert_eq!(scanner.tokens[2].token_type, Gets);
+        assert_eq!(scanner.tokens[3].token_type, StringLit);
+        assert_eq!(scanner.tokens[4].token_type, Semicolon);
+        assert_eq!(scanner.tokens[5].token_type, Eof);
     }
 }
