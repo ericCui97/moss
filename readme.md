@@ -85,7 +85,7 @@ cmoss is moss lang backend,written in c.
 - [x] function define expression
 - [ ] array expression
 - [ ] object expression
-- [ ] scoping and scop resolve
+- [x] scoping and scop resolve
 - [x] class statement
 
 ### bug
