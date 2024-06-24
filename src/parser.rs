@@ -789,4 +789,21 @@ mod tests {
 
         assert_eq!(string_expr, "(== 1 (group (+ 2 2)))");
     }
+    #[test]
+    fn test_function_decl(){
+        let source = r#"fun foo(a, b) {
+                                var add = a+b;
+                                if(a + b > 3){
+                                    return a + b;
+                                }
+                                return a;
+                            }
+                            print foo(1, 2);
+                            "#;
+        let mut scanner = Scanner::new(source);
+        let tokens = scanner.scan_tokens().unwrap();
+        let mut parser = Parser::new(tokens);
+        let parsed_expr = parser.parse().unwrap();
+        println!("{:?}",parsed_expr);
+    }
 }
