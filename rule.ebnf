@@ -1,0 +1,46 @@
+program ::= (expression ";")* EOF 
+
+fauxDeclaration ::= classDecl | funDecl | varDecl | fauxStatement
+classDecl ::= "class" IDENTIFIER ("extends" IDENTIFIER)? "{" ( member)*"}"
+funDecl ::= "fun" function 
+varDecl ::= "var" IDENTIFIER ("=" expression)? ";" 
+
+fauxStatement ::= for| if | print | return | while | block 
+import ::= "import" IDENTIFIER "from" STRING ";"
+export ::= "export" IDENTIFIER ";"
+for ::= "for" "(" expression? ";" (expression)? ";" (expression)? ")" expression
+if ::= "if" "(" expression ")" expression ("else" expression)?
+print ::= "print" expression ";"
+return ::= "return" (expression)? ";"
+while ::= "while" "(" expression ")" expression
+block ::= "{" (expression ";")* "}"
+
+expression ::= fauxDeclaration| assignment
+assignment ::= ((call ".")? IDENTIFIER "=" assignment) | logic_or 
+logic_or ::= logic_and ("or" logic_and)*
+logic_and ::= equality ("and" equality)*
+equality ::= comparison (("==" | "!=") comparison)* 
+comparison ::= term ((">" | "<" | "<=" | ">=") term)*
+term ::= factor (("+" | "-") factor)* 
+factor ::= unary (("/" | "*") unary)*
+array ::= "[" (elements ","?)? "]" 
+object ::= "#{" (objmembers ","?)? "}"
+
+unary ::= ("!" | "-") unary | call 
+call ::= primary ("(" arguments? ")" | "." IDENTIFIER | "[" expression "]")* 
+primary ::= "true" | "false" | "nil" | "none" | "this" | NUMBER | STRING | IDENTIFIER | "(" expression ")" | "super" "." IDENTIFIER | array | object
+
+
+objmembers ::= objmember | objmember "," objmembers
+objmember ::= (IDENTIFIER | STRING) ":" expression
+elements ::= expression | expression "," elements
+function ::= IDENTIFIER "(" parameters? ")" block 
+parameters ::= IDENTIFIER ("," IDENTIFIER)* 
+arguments ::= expression ("," expression)*
+member ::= access* ("fun" function| varDecl)
+access ::= "private" | "public" | "dynamic" | "static" | "override"
+NUMBER ::= DIGIT+ ("." DIGIT+)?
+STRING ::=  '@'? '"' ([^"\\] | "\\" | '\"' | '\n')* '"'
+IDENTIFIER ::= ALPHA (ALPHA | DIGIT)*
+ALPHA ::= [A-Za-z_]
+DIGIT ::= [0-9]
