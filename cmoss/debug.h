@@ -1,6 +1,7 @@
 #pragma once
 
 #include "chunk.h"
+#include "value.h"
 /**
  * 把一个chunk中的指令打印出来
  * @param chunk chunk指针

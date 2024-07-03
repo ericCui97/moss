@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -g
 
-SRCS = main.c chunk.c memory.c debug.c
+SRCS = main.c chunk.c memory.c debug.c value.c
 OBJS = $(SRCS:.c=.o)
 
 TARGET = cmoss
