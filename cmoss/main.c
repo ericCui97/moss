@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "chunk.h"
 #include "common.h"
 #include "debug.h"
@@ -16,6 +17,7 @@ static void repl()
             break;  // EOF
         }
         interpret(line);
+        memset(line, 0, sizeof(line));
     }
 }
 
