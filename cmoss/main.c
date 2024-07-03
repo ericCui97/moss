@@ -13,6 +13,16 @@ int main(int argc, char** argv)
     int constant = add_constant(&chunk, 1.2);
     write_chunk(&chunk, OP_CONSTANT, 123);
     write_chunk(&chunk, constant, 123);
+    constant = add_constant(&chunk, 3.4);
+    write_chunk(&chunk, OP_CONSTANT, 123);
+    write_chunk(&chunk, constant, 123);
+    write_chunk(&chunk, OP_ADD, 123);
+
+    constant = add_constant(&chunk, 5.6);
+    write_chunk(&chunk, OP_CONSTANT, 123);
+    write_chunk(&chunk, constant, 123);
+
+    write_chunk(&chunk, OP_DIVIDE, 123);
     write_chunk(&chunk, OP_NEGATIVE, 123);
     write_chunk(&chunk, OP_RETURN, 123);
 
