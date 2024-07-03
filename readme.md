@@ -33,6 +33,7 @@ the primitive type:
 - string: just a string
 - boolean: true or false
 
+
 ### install
 
 ```bash
@@ -95,3 +96,11 @@ cmoss is moss lang backend,written in c.
 ### refact
 
 - [ ] use nom refact lexer
+
+## reference
+
+###  basic data type
+- number: f64
+- string: String
+- boolean: bool
+- nil
