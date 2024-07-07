@@ -1,3 +1,4 @@
 #pragma once
-
-void compile(const char* source);
+#include <stdbool.h>
+#include "chunk.h"
+bool compile(const char* source, Chunk* chunk);

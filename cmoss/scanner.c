@@ -256,7 +256,7 @@ Token scan_token()
         advance();
         break;
     }
-    printf("ASCII value: %d\n", c);
+    printf("unexpect ASCII value: %d\n", c);
 
     return error_token("Unexpected character.");
 }

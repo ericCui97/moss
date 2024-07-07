@@ -35,7 +35,7 @@ void free_chunk(Chunk* chunk)
     free_value_array(&chunk->constants);
     init_chunk(chunk);
 }
-
+// 将value push到chunk结构体的constants 数组，然后返回这个值的index
 int add_constant(Chunk* chunk, Value value)
 {
     write_value_array(&chunk->constants, value);
