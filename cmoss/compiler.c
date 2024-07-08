@@ -266,27 +266,28 @@ static ParseRule* getRule(TokenType type)
 bool compile(const char* source, Chunk* chunk)
 {
     init_scanner(source);
-    compilingChunk = chunk;
-    reset();
-    advance();
-    expression();
-    consume(TOKEN_EOF, "expect end of line\n");
-    end_compiler();
-    return !parser.has_error;
+    // PARSER
+    // compilingChunk = chunk;
+    // reset();
+    // advance();
+    // expression();
+    // consume(TOKEN_EOF, "expect end of line\n");
+    // end_compiler();
+    // return !parser.has_error;
+    // END PARSER
+    int line = -1;
+    for (;;) {
+        Token token = scan_token();
+        if (token.line != line) {
+            printf("%4d ", token.line);
+            line = token.line;
+        } else {
+            printf("   | ");
+        }
+        printf("%2d '%.*s' %s\n", token.type, token.length, token.start,
+               tokentype_2_string(token.type));
 
-    // int line = -1;
-    // for (;;) {
-    //     Token token = scan_token();
-    //     if (token.line != line) {
-    //         printf("%4d ", token.line);
-    //         line = token.line;
-    //     } else {
-    //         printf("   | ");
-    //     }
-    //     printf("%2d '%.*s' %s\n", token.type, token.length, token.start,
-    //            tokentype_2_string(token.type));
-
-    //     if (token.type == TOKEN_EOF)
-    //         break;
-    // }
+        if (token.type == TOKEN_EOF)
+            break;
+    }
 }

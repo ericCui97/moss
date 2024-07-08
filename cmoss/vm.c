@@ -100,6 +100,7 @@ static InterpretResult run()
 
 InterpretResult interpret(char* source)
 {
+    printf("%s\n",source);
     Chunk chunk;
     init_chunk(&chunk);
     if (!compile(source, &chunk)) {
