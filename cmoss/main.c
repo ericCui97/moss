@@ -16,6 +16,9 @@ static void repl()
             printf("\n");
             break;  // EOF
         }
+
+        size_t len = strlen(line);
+        line[--len] = '\0';  // 将换行符替换为空字符
         interpret(line);
         memset(line, 0, sizeof(line));
     }

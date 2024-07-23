@@ -15,7 +15,7 @@ typedef struct {
     bool  has_error;
     bool  panic_mode;
 } Parser;
-
+// 优先级序列
 typedef enum {
     PREC_NONE,
     PREC_ASSIGNMENT,  // =
