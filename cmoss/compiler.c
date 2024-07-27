@@ -5,6 +5,7 @@
 #include "chunk.h"
 #include "debug.h"
 #include "scanner.h"
+#include "value.h"
 #ifdef DEBUG_PRINT_CODE
 #include "debug.h"
 #endif
@@ -130,7 +131,7 @@ static void end_compiler()
 
 static uint8_t make_constant(double val)
 {
-    int constant = add_constant(current_chunk(), val);
+    int constant = add_constant(current_chunk(), NUMBER_VAL(val));
     if (constant > UINT8_MAX) {
         error("too many constant in one chunk\n");
         return 0;
@@ -164,7 +165,7 @@ static void parse_precedence(Precedence precedence)
 static void number()
 {
     double val = strtod(parser.previous.start, NULL);
-    emit_constant(val);
+    emit_constant(AS_NUMBER(NUMBER_VAL(val)));
 }
 
 static void expression()
@@ -186,8 +187,27 @@ static void unary()
     case TOKEN_MINUS:
         emit_byte(OP_NEGATIVE);
         break;
+    case TOKEN_BANG:
+        emit_byte(OP_NOT);
     default:
         return;
+    }
+}
+
+static void literal()
+{
+    switch (parser.previous.type) {
+    case TOKEN_FALSE:
+        emit_byte(OP_FALSE);
+        break;
+    case TOKEN_NIL:
+        emit_byte(OP_NIL);
+        break;
+    case TOKEN_TRUE:
+        emit_byte(OP_TRUE);
+        break;
+    default:
+        return;  // Unreachable.
     }
 }
 
@@ -198,6 +218,24 @@ static void binary()
     parse_precedence((Precedence)(rule->precedence + 1));
 
     switch (operatorType) {
+    case TOKEN_BANG_EQUAL:
+        emit_bytes(OP_EQUAL, OP_NOT);
+        break;
+    case TOKEN_EQUAL_EQUAL:
+        emit_byte(OP_EQUAL);
+        break;
+    case TOKEN_GREATER:
+        emit_byte(OP_GREATER);
+        break;
+    case TOKEN_GREATER_EQUAL:
+        emit_bytes(OP_LESS, OP_NOT);
+        break;
+    case TOKEN_LESS:
+        emit_byte(OP_LESS);
+        break;
+    case TOKEN_LESS_EQUAL:
+        emit_bytes(OP_GREATER, OP_NOT);
+        break;
     case TOKEN_PLUS:
         emit_byte(OP_ADD);
         break;
@@ -227,31 +265,31 @@ ParseRule rules[] = {
     [TOKEN_SEMICOLON] = {NULL, NULL, PREC_NONE},
     [TOKEN_SLASH] = {NULL, binary, PREC_FACTOR},
     [TOKEN_STAR] = {NULL, binary, PREC_FACTOR},
-    [TOKEN_BANG] = {NULL, NULL, PREC_NONE},
-    [TOKEN_BANG_EQUAL] = {NULL, NULL, PREC_NONE},
+    [TOKEN_BANG] = {unary, NULL, PREC_NONE},
+    [TOKEN_BANG_EQUAL] = {NULL, binary, PREC_EQUALITY},
     [TOKEN_EQUAL] = {NULL, NULL, PREC_NONE},
-    [TOKEN_EQUAL_EQUAL] = {NULL, NULL, PREC_NONE},
-    [TOKEN_GREATER] = {NULL, NULL, PREC_NONE},
-    [TOKEN_GREATER_EQUAL] = {NULL, NULL, PREC_NONE},
-    [TOKEN_LESS] = {NULL, NULL, PREC_NONE},
-    [TOKEN_LESS_EQUAL] = {NULL, NULL, PREC_NONE},
+    [TOKEN_EQUAL_EQUAL] = {NULL, binary, PREC_EQUALITY},
+    [TOKEN_GREATER] = {NULL, binary, PREC_COMPARISON},
+    [TOKEN_GREATER_EQUAL] = {NULL, binary, PREC_COMPARISON},
+    [TOKEN_LESS] = {NULL, binary, PREC_COMPARISON},
+    [TOKEN_LESS_EQUAL] = {NULL, binary, PREC_COMPARISON},
     [TOKEN_IDENTIFIER] = {NULL, NULL, PREC_NONE},
     [TOKEN_STRING] = {NULL, NULL, PREC_NONE},
     [TOKEN_NUMBER] = {number, NULL, PREC_NONE},
     [TOKEN_AND] = {NULL, NULL, PREC_NONE},
     [TOKEN_CLASS] = {NULL, NULL, PREC_NONE},
     [TOKEN_ELSE] = {NULL, NULL, PREC_NONE},
-    [TOKEN_FALSE] = {NULL, NULL, PREC_NONE},
+    [TOKEN_FALSE] = {literal, NULL, PREC_NONE},
     [TOKEN_FOR] = {NULL, NULL, PREC_NONE},
     [TOKEN_FUN] = {NULL, NULL, PREC_NONE},
     [TOKEN_IF] = {NULL, NULL, PREC_NONE},
-    [TOKEN_NIL] = {NULL, NULL, PREC_NONE},
+    [TOKEN_NIL] = {literal, NULL, PREC_NONE},
     [TOKEN_OR] = {NULL, NULL, PREC_NONE},
     [TOKEN_PRINT] = {NULL, NULL, PREC_NONE},
     [TOKEN_RETURN] = {NULL, NULL, PREC_NONE},
     [TOKEN_SUPER] = {NULL, NULL, PREC_NONE},
     [TOKEN_THIS] = {NULL, NULL, PREC_NONE},
-    [TOKEN_TRUE] = {NULL, NULL, PREC_NONE},
+    [TOKEN_TRUE] = {literal, NULL, PREC_NONE},
     [TOKEN_VAR] = {NULL, NULL, PREC_NONE},
     [TOKEN_WHILE] = {NULL, NULL, PREC_NONE},
     [TOKEN_ERROR] = {NULL, NULL, PREC_NONE},
@@ -267,27 +305,27 @@ bool compile(const char* source, Chunk* chunk)
 {
     init_scanner(source);
     // PARSER
-    // compilingChunk = chunk;
-    // reset();
-    // advance();
-    // expression();
-    // consume(TOKEN_EOF, "expect end of line\n");
-    // end_compiler();
-    // return !parser.has_error;
+    compilingChunk = chunk;
+    reset();
+    advance();
+    expression();
+    consume(TOKEN_EOF, "expect end of line\n");
+    end_compiler();
+    return !parser.has_error;
     // END PARSER
-    int line = -1;
-    for (;;) {
-        Token token = scan_token();
-        if (token.line != line) {
-            printf("%4d ", token.line);
-            line = token.line;
-        } else {
-            printf("   | ");
-        }
-        printf("%2d '%.*s' %s\n", token.type, token.length, token.start,
-               tokentype_2_string(token.type));
+    // int line = -1;
+    // for (;;) {
+    //     Token token = scan_token();
+    //     if (token.line != line) {
+    //         printf("%4d ", token.line);
+    //         line = token.line;
+    //     } else {
+    //         printf("   | ");
+    //     }
+    //     printf("%2d '%.*s' %s\n", token.type, token.length, token.start,
+    //            tokentype_2_string(token.type));
 
-        if (token.type == TOKEN_EOF)
-            break;
-    }
+    //     if (token.type == TOKEN_EOF)
+    //         break;
+    // }
 }

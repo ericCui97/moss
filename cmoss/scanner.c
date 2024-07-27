@@ -117,6 +117,8 @@ static bool is_digit(char c)
 
 static Token number()
 {
+    while (is_digit(peek()))
+        advance();
     if (peek() == '.' && is_digit(peek_next())) {
         // Consume the ".".
         advance();
