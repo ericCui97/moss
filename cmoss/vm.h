@@ -9,8 +9,10 @@ typedef struct {
     uint8_t* ip; // instruction pointer 也就是pc指针
     Value stack[STACK_MAX];
     Value* stackTop;
+    Obj*     objects;
 } VM;
 
+extern VM vm;
 
 typedef enum{
  INTERPRET_OK,

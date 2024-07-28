@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "chunk.h"
 #include "debug.h"
+#include "object.h"
 #include "scanner.h"
 #include "value.h"
 #ifdef DEBUG_PRINT_CODE
@@ -129,9 +130,9 @@ static void end_compiler()
 #endif
 }
 
-static uint8_t make_constant(double val)
+static uint8_t make_constant(Value val)
 {
-    int constant = add_constant(current_chunk(), NUMBER_VAL(val));
+    int constant = add_constant(current_chunk(), val);
     if (constant > UINT8_MAX) {
         error("too many constant in one chunk\n");
         return 0;
@@ -139,7 +140,7 @@ static uint8_t make_constant(double val)
     return (uint8_t)constant;
 }
 
-static void emit_constant(double val)
+static void emit_constant(Value val)
 {
     emit_bytes(OP_CONSTANT, make_constant(val));
 }
@@ -165,8 +166,15 @@ static void parse_precedence(Precedence precedence)
 static void number()
 {
     double val = strtod(parser.previous.start, NULL);
-    emit_constant(AS_NUMBER(NUMBER_VAL(val)));
+    emit_constant(NUMBER_VAL(val));
 }
+
+static void string()
+{
+    // -2 是把两个引号去掉
+    emit_constant(OBJ_VAL(copy_string1(parser.previous.start + 1,
+                                       parser.previous.length - 2)));
+};
 
 static void expression()
 {
@@ -274,7 +282,7 @@ ParseRule rules[] = {
     [TOKEN_LESS] = {NULL, binary, PREC_COMPARISON},
     [TOKEN_LESS_EQUAL] = {NULL, binary, PREC_COMPARISON},
     [TOKEN_IDENTIFIER] = {NULL, NULL, PREC_NONE},
-    [TOKEN_STRING] = {NULL, NULL, PREC_NONE},
+    [TOKEN_STRING] = {string, NULL, PREC_NONE},
     [TOKEN_NUMBER] = {number, NULL, PREC_NONE},
     [TOKEN_AND] = {NULL, NULL, PREC_NONE},
     [TOKEN_CLASS] = {NULL, NULL, PREC_NONE},
