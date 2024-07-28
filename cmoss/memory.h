@@ -14,7 +14,7 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize);
 
 #define ALLOCATE(type, count)                                              \
     (type*)reallocate(NULL, 0, sizeof(type) * (count))
-
+#define FREE(type, pointer) reallocate(pointer, sizeof(type), 0)
 void free_objects();
 
 void free_object(Obj* obj);
