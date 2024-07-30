@@ -2,15 +2,22 @@ CC = gcc
 CFLAGS = -Wall -Wextra -g
 
 SRCS = main.c chunk.c memory.c debug.c value.c vm.c compiler.c scanner.c object.c
-OBJS = $(SRCS:.c=.o)
+OBJS = $(patsubst %.c,build/%.o,$(SRCS))
 
 TARGET = cmoss
+
+.PHONY: all clean
+
+all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
 
-%.o: %.c
+build/%.o: %.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
+build:
+	mkdir -p build
+
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -rf build $(TARGET)

@@ -108,6 +108,7 @@ static InterpretResult run()
         uint8_t instruction;
         switch (instruction = READ_BYTE()) {
         case OP_PRINT: {
+            // printf("goto print");
             print_value(pop());
             printf("\n");
             break;
