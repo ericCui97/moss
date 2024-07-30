@@ -108,8 +108,9 @@ static InterpretResult run()
         uint8_t instruction;
         switch (instruction = READ_BYTE()) {
         case OP_RETURN: {
-            print_value(pop());
-            printf("\n");
+            // print_value(pop());
+            // printf("\n");
+            // exit the vm;
             return INTERPRET_OK;
         }
 
@@ -172,6 +173,11 @@ static InterpretResult run()
         case OP_LESS:
             BINARY_OP(BOOL_VAL, <);
             break;
+        case OP_PRINT: {
+            print_value(pop());
+            printf("\n");
+            break;
+        }
         }
     }
 

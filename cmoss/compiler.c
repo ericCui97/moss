@@ -219,6 +219,19 @@ static void literal()
     }
 }
 
+static bool check(TokenType type)
+{
+    return parser.current.type == type;
+}
+
+static bool match(TokenType type)
+{
+    if (!check(type))
+        return false;
+    advance();
+    return true;
+}
+
 static void binary()
 {
     TokenType  operatorType = parser.previous.type;
@@ -259,6 +272,25 @@ static void binary()
     default:
         return;  // Unreachable.
     }
+}
+
+static void print_statement()
+{
+    expression();
+    consume(TOKEN_SEMICOLON, "expect ; after print statement");
+    emit_byte(OP_PRINT);
+}
+
+static void statement()
+{
+    if (match(TOKEN_PRINT)) {
+        print_statement();
+    }
+}
+
+static void declaration()
+{
+    statement();
 }
 
 ParseRule rules[] = {
@@ -316,8 +348,11 @@ bool compile(const char* source, Chunk* chunk)
     compilingChunk = chunk;
     reset();
     advance();
-    expression();
-    consume(TOKEN_EOF, "expect end of line\n");
+    // expression();
+    // consume(TOKEN_EOF, "expect end of line\n");
+    while (!match(TOKEN_EOF)) {
+        declaration();
+    }
     end_compiler();
     return !parser.has_error;
     // END PARSER
