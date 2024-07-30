@@ -46,7 +46,13 @@ Chunk* compilingChunk;
 static void       expression();
 static ParseRule* getRule(TokenType type);
 static void       parse_precedence(Precedence precedence);
+
+static void statement();
+static void expression_statement();
+static void declaration();
+
 static void       error_at(Token* token, const char* msg)
+
 {
     if (parser.panic_mode)
         return;
@@ -285,12 +291,57 @@ static void statement()
 {
     if (match(TOKEN_PRINT)) {
         print_statement();
+    } else {
+        expression_statement();
     }
 }
 
+static void sync()
+{
+    parser.panic_mode = false;
+
+    while (parser.current.type != TOKEN_EOF) {
+        if (parser.previous.type == TOKEN_SEMICOLON)
+            return;
+        switch (parser.current.type) {
+        case TOKEN_CLASS:
+        case TOKEN_FUN:
+        case TOKEN_VAR:
+        case TOKEN_FOR:
+        case TOKEN_IF:
+        case TOKEN_WHILE:
+        case TOKEN_PRINT:
+        case TOKEN_RETURN:
+            return;
+
+        default:;  // Do nothing.
+        }
+
+        advance();
+    }
+}
+
+static void var_declaration() {}
+
 static void declaration()
 {
+    // if (match(TOKEN_VAR)) {
+    //     var_declaration();
+    // } else {
+    //     statement();
+    // }
     statement();
+
+    if (parser.panic_mode) {
+        sync();
+    }
+}
+
+static void expression_statement()
+{
+    expression();
+    consume(TOKEN_SEMICOLON, "expect ; after expression statement");
+    emit_byte(OP_POP);
 }
 
 ParseRule rules[] = {
