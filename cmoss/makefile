@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -g
 
-SRCS = main.c chunk.c memory.c debug.c value.c vm.c compiler.c scanner.c object.c
+SRCS = main.c chunk.c memory.c debug.c value.c vm.c compiler.c scanner.c object.c hashtable.c
 OBJS = $(patsubst %.c,build/%.o,$(SRCS))
 
 TARGET = cmoss

@@ -2,14 +2,17 @@
 #include <stdint.h>
 #include "chunk.h"
 #include "common.h"
+#include "hashtable.h"
 #include "value.h"
 #define STACK_MAX 256
 typedef struct {
     Chunk* chunk;
     uint8_t* ip; // instruction pointer 也就是pc指针
     Value stack[STACK_MAX];
-    Value* stackTop;
+    Value*   stackTop;
+    Table    strings;
     Obj*     objects;
+
 } VM;
 
 extern VM vm;

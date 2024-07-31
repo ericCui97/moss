@@ -65,14 +65,8 @@ bool values_equal(Value a, Value b)
         return true;
     case VAL_NUMBER:
         return AS_NUMBER(a) == AS_NUMBER(b);
-    case VAL_OBJ: {
-        ObjString* string_a = AS_STRING(a);
-        ObjString* string_b = AS_STRING(b);
-
-        return string_a->length == string_b->length &&
-               memcmp(string_a->chars, string_b->chars, string_a->length) ==
-                   0;
-    }
+    case VAL_OBJ:
+        return AS_OBJ(a) == AS_OBJ(b);
     default:
         return false;  // Unreachable.
     }

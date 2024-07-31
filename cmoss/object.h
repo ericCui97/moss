@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 #include "common.h"
 #include "value.h"
 
@@ -21,7 +22,9 @@ struct Obj {
 struct ObjString {
     Obj obj;  // 这个要写在第一位，这样任意的obj派生类型如objstring都可以安全的强转为obj指针进行操作
     char* chars;
+
     int   length;
+    uint32_t hash;
 };
 // value 在此处被调用多次，不能直接写到宏里面
 static inline bool is_obj_type(Value value, ObjType type)
