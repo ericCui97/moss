@@ -50,8 +50,9 @@ static void       parse_precedence(Precedence precedence);
 static void statement();
 static void expression_statement();
 static void declaration();
+static uint8_t identifier_constant(Token* token);
 
-static void       error_at(Token* token, const char* msg)
+static void error_at(Token* token, const char* msg)
 
 {
     if (parser.panic_mode)
@@ -181,6 +182,17 @@ static void string()
     emit_constant(OBJ_VAL(copy_string1(parser.previous.start + 1,
                                        parser.previous.length - 2)));
 };
+
+static void named_variable(Token token)
+{
+    uint8_t arg = identifier_constant(&token);
+    emit_bytes(OP_GET_GLOBAL, arg);
+}
+
+static void variable()
+{
+    named_variable(parser.previous);
+}
 
 static void expression()
 {
@@ -321,16 +333,46 @@ static void sync()
     }
 }
 
-static void var_declaration() {}
+static uint8_t identifier_constant(Token* token)
+{
+    return make_constant(
+        OBJ_VAL(copy_string1(token->start, token->length)));
+}
+
+static void define_val(uint8_t global)
+{
+    emit_bytes(OP_DEFINE_GLOBAL, global);
+}
+
+static uint8_t parse_variable(const char* err)
+{
+    consume(TOKEN_IDENTIFIER, err);
+    return identifier_constant(&parser.previous);
+}
+
+static void var_declaration()
+{
+    uint8_t global = parse_variable("expect val name");
+
+    if (match(TOKEN_EQUAL)) {
+        expression();
+    } else {
+        emit_byte(OP_NIL);
+    }
+
+    consume(TOKEN_SEMICOLON, "expect ; after variable decl");
+
+    define_val(global);
+}
 
 static void declaration()
 {
-    // if (match(TOKEN_VAR)) {
-    //     var_declaration();
-    // } else {
-    //     statement();
-    // }
-    statement();
+    if (match(TOKEN_VAR)) {
+        var_declaration();
+    } else {
+        statement();
+    }
+    // statement();
 
     if (parser.panic_mode) {
         sync();
@@ -364,7 +406,7 @@ ParseRule rules[] = {
     [TOKEN_GREATER_EQUAL] = {NULL, binary, PREC_COMPARISON},
     [TOKEN_LESS] = {NULL, binary, PREC_COMPARISON},
     [TOKEN_LESS_EQUAL] = {NULL, binary, PREC_COMPARISON},
-    [TOKEN_IDENTIFIER] = {NULL, NULL, PREC_NONE},
+    [TOKEN_IDENTIFIER] = {variable, NULL, PREC_NONE},
     [TOKEN_STRING] = {string, NULL, PREC_NONE},
     [TOKEN_NUMBER] = {number, NULL, PREC_NONE},
     [TOKEN_AND] = {NULL, NULL, PREC_NONE},
